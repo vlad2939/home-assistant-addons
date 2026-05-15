@@ -1,4 +1,4 @@
-# Vlad Home Assistant Add-ons
+# Vlad`s Home Assistant Add-ons
 
 O colecție personală de add-on-uri pentru Home Assistant, grupate într-un singur repository. Fiecare add-on rămâne independent, cu propriul `config.yaml`, `Dockerfile`, cod sursă, fișiere de configurare și ciclu de versiune.
 
