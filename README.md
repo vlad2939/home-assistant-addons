@@ -1,6 +1,6 @@
 # Vlad Home Assistant Add-ons
 
-O colectie personala de add-on-uri pentru Home Assistant, grupate intr-un singur repository. Fiecare add-on ramane independent, cu propriul `config.yaml`, `Dockerfile`, cod sursa, fisiere de configurare si ciclu de versiune.
+O colecție personală de add-on-uri pentru Home Assistant, grupate într-un singur repository. Fiecare add-on rămâne independent, cu propriul `config.yaml`, `Dockerfile`, cod sursă, fișiere de configurare și ciclu de versiune.
 
 Repository URL:
 
@@ -10,31 +10,31 @@ https://github.com/vlad2939/home-assistant-addons
 
 ## Despre Acest Repository
 
-Acest repository este gandit ca un monorepo pentru add-on-uri Home Assistant. In loc sa adaugi cate un repository separat pentru fiecare proiect, adaugi o singura adresa in Home Assistant, iar Add-on Store va detecta toate add-on-urile disponibile.
+Acest repository este gândit ca un monorepo pentru add-on-uri Home Assistant. În loc să adaugi câte un repository separat pentru fiecare proiect, adaugi o singură adresă în Home Assistant, iar Add-on Store va detecta toate add-on-urile disponibile.
 
 Avantaje:
 
-- un singur repository de adaugat in Home Assistant;
-- fiecare add-on ramane separat si poate fi instalat individual;
-- fiecare add-on are propriul `slug`, propria versiune si propriile fisiere;
-- poti adauga usor add-on-uri noi prin crearea unui folder nou la radacina;
-- proiectele existente raman usor de intretinut, fara sa fie transformate intr-o singura aplicatie.
+- un singur repository de adăugat în Home Assistant;
+- fiecare add-on rămâne separat și poate fi instalat individual;
+- fiecare add-on are propriul `slug`, propria versiune și propriile fișiere;
+- poți adăuga ușor add-on-uri noi prin crearea unui folder nou la rădăcină;
+- proiectele existente rămân ușor de întreținut, fără să fie transformate într-o singură aplicație.
 
 ## Instalare
 
 1. Deschide Home Assistant.
 2. Mergi la **Settings** -> **Add-ons** -> **Add-on Store**.
-3. Apasa meniul cu trei puncte din dreapta sus.
+3. Apasă meniul cu trei puncte din dreapta sus.
 4. Alege **Repositories**.
-5. Adauga urmatoarea adresa:
+5. Adaugă următoarea adresă:
 
 ```text
 https://github.com/vlad2939/home-assistant-addons
 ```
 
-6. Apasa **Add**.
-7. Revino in Add-on Store si cauta add-on-ul dorit.
-8. Instaleaza add-on-ul, apoi porneste-l din pagina lui.
+6. Apasă **Add**.
+7. Revino în Add-on Store și caută add-on-ul dorit.
+8. Instalează add-on-ul, apoi pornește-l din pagina lui.
 
 ## Lista Add-on-urilor
 
@@ -49,17 +49,17 @@ https://github.com/vlad2939/home-assistant-addons
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.0` | Da | `3000` | Stabil |
 | MyTube Dash | `mytubedash-addon` | `mytubedash` | `2.0.5` | Da | `3000` | Stabil |
 
-Legenda:
+Legendă:
 
-- **Ingress**: add-on-ul poate fi deschis direct din interfata Home Assistant.
-- **Port intern**: portul pe care aplicatia asculta in container.
-- **Slug**: identificatorul unic folosit de Home Assistant. Doua add-on-uri nu trebuie sa aiba acelasi slug.
+- **Ingress**: add-on-ul poate fi deschis direct din interfața Home Assistant.
+- **Port intern**: portul pe care aplicația ascultă în container.
+- **Slug**: identificatorul unic folosit de Home Assistant. Două add-on-uri nu trebuie să aibă același slug.
 
 ## Add-on-uri Incluse
 
 ### Car Cost Dashboard
 
-Dashboard local pentru evidenta costurilor auto. Ruleaza ca aplicatie Node.js simpla si ofera o interfata web pentru cheltuieli, alimentari, backup si restaurare date.
+Dashboard local pentru evidența costurilor auto. Rulează ca aplicație Node.js simplă și oferă o interfață web pentru cheltuieli, alimentări, backup și restaurare date.
 
 Detalii:
 
@@ -70,11 +70,11 @@ Detalii:
 - port intern: `3000`;
 - port extern implicit: `3030`;
 - date persistente: `/data/car-cost-dashboard`;
-- fisiere principale: `server.js`, `public/`, `data/`, `run.sh`.
+- fișiere principale: `server.js`, `public/`, `data/`, `run.sh`.
 
 ### Home Cost Dashboard
 
-Dashboard pentru urmarirea si analiza cheltuielilor casei si utilitatilor. Aplicatia ruleaza prin Node.js si foloseste o baza de date JSON locala.
+Dashboard pentru urmărirea și analiza cheltuielilor casei și utilităților. Aplicația rulează prin Node.js și folosește o bază de date JSON locală.
 
 Detalii:
 
@@ -84,12 +84,12 @@ Detalii:
 - ingress: activ;
 - port intern: `3000`;
 - port extern implicit: `3040`;
-- date aplicatie: `app/database.json`;
-- fisiere principale: `app/`, `rootfs/`, `Dockerfile`.
+- date aplicație: `app/database.json`;
+- fișiere principale: `app/`, `rootfs/`, `Dockerfile`.
 
 ### TubeDash
 
-Aplicatie HTML/CSS/JavaScript servita prin NGINX, destinata organizarii si vizualizarii continutului YouTube intr-un mediu controlat.
+Aplicație HTML/CSS/JavaScript servită prin NGINX, destinată organizării și vizualizării conținutului YouTube într-un mediu controlat.
 
 Detalii:
 
@@ -98,13 +98,13 @@ Detalii:
 - versiune: `5.0.2`;
 - ingress: activ;
 - port intern: `3000`;
-- fisiere principale: `index.html`, `style.css`, `app.js`, `data.json`.
+- fișiere principale: `index.html`, `style.css`, `app.js`, `data.json`.
 
-Nota: acest add-on a primit slug-ul `tubedash` pentru a evita conflictul cu `mytubedash-addon`.
+Notă: acest add-on a primit slug-ul `tubedash` pentru a evita conflictul cu `mytubedash-addon`.
 
 ### Full Web Server
 
-Server NGINX complet pentru Home Assistant. Serveste fisiere din `/share/webserver`, cu suport pentru autoindexare si acces direct prin port mapat.
+Server NGINX complet pentru Home Assistant. Servește fișiere din `/share/webserver`, cu suport pentru autoindexare și acces direct prin port mapat.
 
 Detalii:
 
@@ -115,11 +115,11 @@ Detalii:
 - port intern: `80`;
 - port extern implicit: `8080`;
 - folder servit: `/share/webserver`;
-- fisiere principale: `nginx.conf`, `run.sh`, `Dockerfile`.
+- fișiere principale: `nginx.conf`, `run.sh`, `Dockerfile`.
 
 ### WordPress Full Option
 
-Add-on pentru WordPress cu NGINX, PHP 8.2 si conectare la MariaDB. Fisierele WordPress sunt pastrate in `/share/wordpress`.
+Add-on pentru WordPress cu NGINX, PHP 8.2 și conectare la MariaDB. Fișierele WordPress sunt păstrate în `/share/wordpress`.
 
 Detalii:
 
@@ -129,10 +129,10 @@ Detalii:
 - port intern: `80`;
 - port extern implicit: `8090`;
 - folder WordPress: `/share/wordpress`;
-- necesita baza de date MariaDB configurata separat;
-- fisiere principale: `nginx.conf`, `run.sh`, `Dockerfile`.
+- necesită bază de date MariaDB configurată separat;
+- fișiere principale: `nginx.conf`, `run.sh`, `Dockerfile`.
 
-Configurare implicita:
+Configurare implicită:
 
 ```yaml
 db_host: "core-mariadb"
@@ -143,7 +143,7 @@ db_name: "wordpress"
 
 ### MyTube Playlist
 
-Aplicatie statica pentru playlist-uri YouTube, cu viewer si editor. Este servita prin NGINX si functioneaza prin Ingress.
+Aplicație statică pentru playlist-uri YouTube, cu viewer și editor. Este servită prin NGINX și funcționează prin Ingress.
 
 Detalii:
 
@@ -152,11 +152,11 @@ Detalii:
 - versiune: `2.0.0`;
 - ingress: activ;
 - port intern: `3000`;
-- fisiere principale: `index.html`, `style.css`, `app.js`, `data.json`, `builder.html`.
+- fișiere principale: `index.html`, `style.css`, `app.js`, `data.json`, `builder.html`.
 
 ### YT Downloader
 
-Aplicatie web pentru descarcarea videoclipurilor de pe YouTube. Ruleaza ca aplicatie Node.js si foloseste `yt-dlp`/procese auxiliare pentru descarcare.
+Aplicație web pentru descărcarea videoclipurilor de pe YouTube. Rulează ca aplicație Node.js și folosește `yt-dlp`/procese auxiliare pentru descărcare.
 
 Detalii:
 
@@ -166,11 +166,11 @@ Detalii:
 - ingress: activ;
 - port intern: `3000`;
 - port extern implicit: `3000`;
-- fisiere principale: `src/`, `public/`, `package.json`, `Dockerfile`.
+- fișiere principale: `src/`, `public/`, `package.json`, `Dockerfile`.
 
 ### MyTube Dash
 
-Aplicatie HTML/CSS/JavaScript servita prin NGINX pentru dashboard YouTube. Ramane separata de `TubeDash` si pastreaza slug-ul original `mytubedash`.
+Aplicație HTML/CSS/JavaScript servită prin NGINX pentru dashboard YouTube. Rămâne separată de `TubeDash` și păstrează slug-ul original `mytubedash`.
 
 Detalii:
 
@@ -179,7 +179,7 @@ Detalii:
 - versiune: `2.0.5`;
 - ingress: activ;
 - port intern: `3000`;
-- fisiere principale: `index.html`, `style.css`, `app.js`.
+- fișiere principale: `index.html`, `style.css`, `app.js`.
 
 ## Structura Repository-ului
 
@@ -230,18 +230,18 @@ home-assistant-addons/
     ...
 ```
 
-Home Assistant citeste folderele de la radacina repository-ului. Orice folder care contine un `config.yaml` valid este tratat ca add-on separat.
+Home Assistant citește folderele de la rădăcina repository-ului. Orice folder care conține un `config.yaml` valid este tratat ca add-on separat.
 
 ## Cum Adaugi Un Add-on Nou
 
-1. Creeaza un folder nou la radacina repository-ului.
-2. Alege un nume scurt si clar pentru folder, de exemplu:
+1. Creează un folder nou la rădăcina repository-ului.
+2. Alege un nume scurt și clar pentru folder, de exemplu:
 
 ```text
 my-new-addon/
 ```
 
-3. Adauga cel putin aceste fisiere:
+3. Adaugă cel puțin aceste fișiere:
 
 ```text
 my-new-addon/
@@ -250,13 +250,13 @@ my-new-addon/
   README.md
 ```
 
-4. In `config.yaml`, foloseste un `slug` unic:
+4. În `config.yaml`, folosește un `slug` unic:
 
 ```yaml
 name: "My New Add-on"
 version: "1.0.0"
 slug: "my_new_addon"
-description: "Descriere scurta a add-on-ului."
+description: "Descriere scurtă a add-on-ului."
 url: "https://github.com/vlad2939/home-assistant-addons"
 arch:
   - amd64
@@ -266,7 +266,7 @@ boot: auto
 init: false
 ```
 
-5. Daca add-on-ul are interfata web in Home Assistant, adauga Ingress:
+5. Dacă add-on-ul are interfață web în Home Assistant, adaugă Ingress:
 
 ```yaml
 ingress: true
@@ -275,75 +275,75 @@ panel_icon: mdi:application
 panel_title: "My New Add-on"
 ```
 
-6. Daca vrei acces direct din retea, adauga si port mapat:
+6. Dacă vrei acces direct din rețea, adaugă și port mapat:
 
 ```yaml
 ports:
   3000/tcp: 3000
 ports_description:
-  3000/tcp: "Interfata web"
+  3000/tcp: "Interfața web"
 webui: "http://[HOST]:[PORT:3000]"
 ```
 
-## Reguli De Mentenanta
+## Reguli De Mentenanță
 
-- Fiecare add-on isi pastreaza propria versiune in `config.yaml`.
-- Cand modifici un add-on, creste versiunea doar pentru acel add-on.
-- Nu folosi acelasi `slug` in doua add-on-uri diferite.
-- Pastreaza `url` in fiecare `config.yaml` catre repository-ul principal:
+- Fiecare add-on își păstrează propria versiune în `config.yaml`.
+- Când modifici un add-on, crește versiunea doar pentru acel add-on.
+- Nu folosi același `slug` în două add-on-uri diferite.
+- Păstrează `url` în fiecare `config.yaml` către repository-ul principal:
 
 ```text
 https://github.com/vlad2939/home-assistant-addons
 ```
 
-- Pastreaza datele utilizatorului in `/data` sau `/share`, nu in fisiere care se pierd la rebuild.
-- Pentru add-on-uri cu fisiere persistente, documenteaza clar folderul folosit.
-- Pentru aplicatii web, prefera Ingress daca vrei acces direct din meniul lateral Home Assistant.
+- Păstrează datele utilizatorului în `/data` sau `/share`, nu în fișiere care se pierd la rebuild.
+- Pentru add-on-uri cu fișiere persistente, documentează clar folderul folosit.
+- Pentru aplicații web, preferă Ingress dacă vrei acces direct din meniul lateral Home Assistant.
 
 ## Actualizare Add-on-uri
 
-Pentru a publica o versiune noua:
+Pentru a publica o versiune nouă:
 
-1. Modifica fisierele add-on-ului.
-2. Creste `version` in `config.yaml`.
-3. Actualizeaza `README.md`, `DOCS.md` sau `CHANGELOG.md` daca exista.
-4. Publica modificarile in GitHub.
-5. In Home Assistant, intra in Add-on Store si verifica daca apare actualizarea.
+1. Modifică fișierele add-on-ului.
+2. Crește `version` în `config.yaml`.
+3. Actualizează `README.md`, `DOCS.md` sau `CHANGELOG.md` dacă există.
+4. Publică modificările în GitHub.
+5. În Home Assistant, intră în Add-on Store și verifică dacă apare actualizarea.
 
-Uneori Home Assistant poate tine cache pentru lista de add-on-uri. Daca nu apare imediat:
+Uneori Home Assistant poate ține cache pentru lista de add-on-uri. Dacă nu apare imediat:
 
-- reporneste Home Assistant;
-- reincarca Add-on Store;
-- elimina si adauga din nou repository-ul;
-- verifica daca `config.yaml` este valid YAML.
+- repornește Home Assistant;
+- reîncarcă Add-on Store;
+- elimină și adaugă din nou repository-ul;
+- verifică dacă `config.yaml` este valid YAML.
 
-## Testare Recomandata
+## Testare Recomandată
 
-Dupa o modificare importanta, testeaza cel putin:
+După o modificare importantă, testează cel puțin:
 
-- add-on-ul apare in Add-on Store;
-- instalarea porneste fara eroare;
-- containerul porneste fara crash;
+- add-on-ul apare în Add-on Store;
+- instalarea pornește fără eroare;
+- containerul pornește fără crash;
 - Ingress se deschide corect, unde este activ;
-- portul extern functioneaza, unde este definit;
-- datele persistente raman dupa restart/rebuild;
-- logurile nu contin erori critice.
+- portul extern funcționează, unde este definit;
+- datele persistente rămân după restart/rebuild;
+- logurile nu conțin erori critice.
 
-Pentru acest repository, testarea manuala principala ar trebui sa acopere:
+Pentru acest repository, testarea manuală principală ar trebui să acopere:
 
-- `ha-webserver` cu fisiere in `/share/webserver`;
+- `ha-webserver` cu fișiere în `/share/webserver`;
 - `ha-wordpress-addon` cu MariaDB configurat;
-- `car-cost-dashboard` cu date persistente in `/data/car-cost-dashboard`;
+- `car-cost-dashboard` cu date persistente în `/data/car-cost-dashboard`;
 - `home-cost-dashboard` cu baza `database.json`;
-- `yt-downloader-addon` cu descarcare reala de test.
+- `yt-downloader-addon` cu descărcare reală de test.
 
 ## Note Importante
 
-- Acest repository contine add-on-uri personale, adaptate pentru uz local in Home Assistant.
-- Unele add-on-uri pot necesita configurari suplimentare, cum ar fi MariaDB pentru WordPress.
-- Unele add-on-uri expun porturi externe; verifica sa nu existe conflicte cu alte servicii din reteaua ta.
-- Daca folosesti backup Home Assistant, include folderele `/share` si datele add-on-urilor pentru a pastra continutul important.
+- Acest repository conține add-on-uri personale, adaptate pentru uz local în Home Assistant.
+- Unele add-on-uri pot necesita configurări suplimentare, cum ar fi MariaDB pentru WordPress.
+- Unele add-on-uri expun porturi externe; verifică să nu existe conflicte cu alte servicii din rețeaua ta.
+- Dacă folosești backup Home Assistant, include folderele `/share` și datele add-on-urilor pentru a păstra conținutul important.
 
-## Licenta
+## Licență
 
-Fiecare add-on pastreaza fisierele de licenta existente in folderul sau, acolo unde acestea exista. Daca adaugi un add-on nou, include o licenta potrivita pentru proiectul respectiv.
+Fiecare add-on păstrează fișierele de licență existente în folderul său, acolo unde acestea există. Dacă adaugi un add-on nou, include o licență potrivită pentru proiectul respectiv.
