@@ -1,0 +1,14 @@
+name: "MyTube Dash - Vanilla Edition"
+version: "2.0.5"
+slug: "mytubedash"
+description: "Versiunea pură HTML/CSS."
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+ingress: true
+ingress_port: 3000
+panel_icon: mdi:youtube
+panel_title: "MyTube Dash"
+url: "https://github.com/vlad2939/home-assistant-addons"

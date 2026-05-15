@@ -1,0 +1,25 @@
+name: Home cost Dashboard
+version: "1.4.1"
+slug: homecost
+description: Urmărire și analiză cheltuieli utilități casă
+url: "https://github.com/vlad2939/home-assistant-addons"
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+startup: application
+boot: auto
+init: false
+ingress: true
+ingress_port: 3000
+panel_icon: mdi:home-analytics
+panel_title: HomeCost
+ports:
+  3000/tcp: 3040
+ports_description:
+  3000/tcp: Interfața web HomeCost
+webui: http://[HOST]:[PORT:3000]
+options: {}
+schema: {}

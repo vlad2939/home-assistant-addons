@@ -1,0 +1,14 @@
+name: "TubeDash"
+version: "5.0.2"
+slug: "tubedash"
+description: "Versiunea pură HTML/CSS."
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+ingress: true
+ingress_port: 3000
+panel_icon: mdi:youtube
+panel_title: "TubeDash"
+url: "https://github.com/vlad2939/home-assistant-addons"

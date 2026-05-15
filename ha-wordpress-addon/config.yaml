@@ -1,0 +1,26 @@
+name: "WordPress Full Option"
+description: "Instalează WordPress complet, cu PHP 8.2 și Nginx. Servește datele și fișierele nativ din folderul /share/wordpress din Home Assistant."
+version: "1.0.2"
+slug: "wordpress_full"
+init: false
+arch:
+  - amd64
+  - aarch64
+startup: services
+boot: auto
+map:
+  - share:rw
+ports:
+  80/tcp: 8090
+webui: "http://[HOST]:[PORT:80]"
+options:
+  db_host: "core-mariadb"
+  db_user: "wordpress"
+  db_password: "Trece_aici_parola_setata_in_MariaDB"
+  db_name: "wordpress"
+schema:
+  db_host: str
+  db_user: str
+  db_password: password
+  db_name: str
+url: "https://github.com/vlad2939/home-assistant-addons"

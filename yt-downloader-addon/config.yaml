@@ -1,0 +1,28 @@
+name: "YT Downloader"
+version: "4.0.0"
+slug: "yt_downloader"
+description: "Aplicație web pentru descărcarea videoclipurilor de pe YouTube. Apare direct în meniul lateral (Side Panel) prin Ingress."
+url: "https://github.com/vlad2939/home-assistant-addons"
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+startup: "application"
+boot: "auto"
+init: false
+# Opțional - menținem și expunerea pe port dedicat (dacă dorești acces din browser http://IP:3000)
+ports:
+  3000/tcp: 3000
+ports_description:
+  3000/tcp: "Web Interface (Acces Direct)"
+# INGRESS - Inima integrării cu Side Panel-ul! 
+ingress: true
+ingress_port: 3000
+ingress_stream: true
+panel_icon: "mdi:download"
+panel_title: "YT Downloader"
+panel_admin: false
+options: {}
+schema: {}

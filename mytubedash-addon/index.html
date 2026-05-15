@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ro" class="dark">
+<head>
+    <meta charset="utf-8">
+    <title>MyTube Dash</title>
+    <!-- Fără tag-uri dinamice. Fără <base>. Doar legături pur relative -> "style.css" -->
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Setare culori Tailwind via link CDN
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { colors: { zinc: { 900: '#18181b', 800: '#27272a', 700: '#3f3f46'} } }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#0a0a0a] text-white flex h-screen overflow-hidden antialiased">
+    <!-- Meniu Lateral (Sidebar) -->
+    <aside class="w-52 bg-zinc-900 border-r border-zinc-800 flex flex-col shrink-0">
+        <div class="p-4 flex items-center justify-between border-b border-zinc-800">
+            <div class="flex items-center gap-2 font-bold text-lg text-white cursor-default">
+                <span class="material-icons text-red-600">play_circle</span>
+                MyTube Dash
+            </div>
+        </div>
+        
+        <div id="sidebar-playlists" class="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
+            <!-- Playlist-urile vor fi generate de app.js aici -->
+        </div>
+
+        <div class="p-3 border-t border-zinc-800">
+            <button onclick="renderSettings()" class="w-full flex items-center gap-2 p-2 hover:bg-zinc-800 rounded text-left transition text-zinc-300 text-sm">
+                <span class="material-icons text-[20px]">settings</span> Setări și Playlists
+            </button>
+        </div>
+    </aside>
+
+    <!-- Zona Principală de Video -->
+    <main id="app-content" class="flex-1 flex flex-col items-center justify-start bg-[#0a0a0a] custom-scrollbar overflow-y-auto w-full p-6">
+        <!-- Tot conținutul este injectat de Javascript aici -->
+    </main>
+
+    <!-- Modal pentru README -->
+    <div id="readme-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" onclick="closeReadmePopup()">
+        <div class="bg-zinc-900 border border-zinc-700 rounded-xl w-full max-w-3xl max-h-[80vh] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-end p-3 border-b border-zinc-800">
+                <button onclick="closeReadmePopup()" class="text-zinc-400 hover:text-white transition"><span class="material-icons">close</span></button>
+            </div>
+            <div id="readme-content" class="p-8 overflow-y-auto prose prose-invert prose-zinc max-w-none text-sm custom-scrollbar text-zinc-300"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
