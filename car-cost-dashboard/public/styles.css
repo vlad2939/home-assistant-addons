@@ -974,6 +974,10 @@ canvas {
   border-radius: var(--radius-sm);
 }
 
+.table-wrap--scroll-12 {
+  max-height: 484px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -994,6 +998,13 @@ th {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+}
+
+.table-wrap--scroll-12 th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-soft);
 }
 
 td {
