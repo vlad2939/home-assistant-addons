@@ -2,6 +2,22 @@
   "rawData": [
     {
       "AN": 2026,
+      "LUNA": 6,
+      "IMPOZIT": 0,
+      "CURENT_Cost": 196.53,
+      "CURENT_KWh": 177,
+      "GAZE_Parter_Cost": 27.89,
+      "GAZE_Parter_KWh": 98,
+      "GAZE_Etaj_Cost": 6.2,
+      "GAZE_Etaj_KWh": 22,
+      "APA_Cost": 110.04,
+      "APA_m3": 8,
+      "Internet": 123.24,
+      "GUNOI": 22.95,
+      "Telefon": 0
+    },
+    {
+      "AN": 2026,
       "LUNA": 5,
       "IMPOZIT": 0,
       "CURENT_Cost": 234,
@@ -1621,8 +1637,9 @@
       "config": {
         "metric": "Lei_per_m3_Apa",
         "aggregation": "avg",
-        "color": "text-slate-600"
-      }
+        "color": "text-slate-900"
+      },
+      "subtitle": ""
     },
     {
       "id": "11",
