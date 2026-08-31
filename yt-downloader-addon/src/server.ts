@@ -1,6 +1,5 @@
 import express from 'express';
 import { join } from 'node:path';
-import youtubedl from 'youtube-dl-exec';
 import cors from 'cors';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -22,6 +21,36 @@ const ytDlpBinary = join(
 
 let ytDlpUpdate: Promise<void> | undefined;
 
+type YtDlpOptions = {
+  audioFormat?: string;
+  dumpJson?: boolean;
+  extractAudio?: boolean;
+  format?: string;
+  mergeOutputFormat?: string;
+  output?: string;
+  remuxVideo?: string;
+};
+
+function createYtDlpArguments(url: string, options: YtDlpOptions = {}): string[] {
+  const args = [url, '--no-warnings'];
+  if (options.dumpJson) args.push('--dump-json');
+  if (options.format) args.push('--format', options.format);
+  if (options.extractAudio) args.push('--extract-audio');
+  if (options.audioFormat) args.push('--audio-format', options.audioFormat);
+  if (options.remuxVideo) args.push('--remux-video', options.remuxVideo);
+  if (options.mergeOutputFormat) args.push('--merge-output-format', options.mergeOutputFormat);
+  if (options.output) args.push('--output', options.output);
+  return args;
+}
+
+async function runYtDlp(url: string, options: YtDlpOptions = {}): Promise<string> {
+  const { stdout } = await execFileAsync(ytDlpBinary, createYtDlpArguments(url, options), {
+    maxBuffer: 10 * 1024 * 1024,
+    windowsHide: true,
+  });
+  return stdout;
+}
+
 async function updateYtDlp(): Promise<void> {
   if (!fs.existsSync(ytDlpBinary)) return;
 
@@ -42,9 +71,9 @@ function updateYtDlpOnce(): Promise<void> {
   return ytDlpUpdate;
 }
 
-async function downloadWithRecovery(url: string, options: Record<string, unknown>): Promise<any> {
+async function downloadWithRecovery(url: string, options: YtDlpOptions): Promise<string> {
   try {
-    return await youtubedl(url, options);
+    return await runYtDlp(url, options);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (!message.includes('HTTP Error 403')) throw error;
@@ -52,7 +81,7 @@ async function downloadWithRecovery(url: string, options: Record<string, unknown
     // YouTube changes its delivery API regularly. Update the extractor once,
     // then retry the original request before exposing an error to the user.
     await updateYtDlpOnce();
-    return youtubedl(url, options);
+    return runYtDlp(url, options);
   }
 }
 
@@ -88,7 +117,7 @@ app.get('/api/info', async (req, res) => {
   }
   
   try {
-    const info: any = await youtubedl(url, { dumpJson: true, noWarnings: true });
+    const info: any = JSON.parse(await runYtDlp(url, { dumpJson: true }));
     
     // Obținem DOAR înălțimile video disponibile pentru selecție clară (ex: 1080, 2160)
     const heights = new Set<number>();
@@ -128,11 +157,11 @@ app.get('/api/prepare', (req, res) => {
   
   const processDownload = async () => {
     try {
-      const info: any = await youtubedl(url, { dumpJson: true, noWarnings: true });
+      const info: any = JSON.parse(await runYtDlp(url, { dumpJson: true }));
       const title = (info.title || 'video').replace(/[^\w\s-]/gi, '_');
       
       let filename = '';
-      let options: any = { noWarnings: true };
+      let options: YtDlpOptions = {};
 
       if (type === 'audio_only') {
           filename = `${title}_audio.mp3`;
