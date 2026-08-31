@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import cors from 'cors';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { execFile } from 'node:child_process';
+import { execFile, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const app = express();
@@ -31,6 +31,18 @@ type YtDlpOptions = {
   remuxVideo?: string;
 };
 
+type JobStatus = 'processing' | 'done' | 'error' | 'cancelled';
+type DownloadJob = {
+  status: JobStatus;
+  error?: string;
+  filename?: string;
+  progress?: number;
+  speed?: string;
+  stage?: string;
+  process?: ChildProcessWithoutNullStreams;
+  cancelled?: boolean;
+};
+
 function createYtDlpArguments(url: string, options: YtDlpOptions = {}): string[] {
   const args = [url, '--no-warnings'];
   if (options.dumpJson) args.push('--dump-json');
@@ -43,12 +55,68 @@ function createYtDlpArguments(url: string, options: YtDlpOptions = {}): string[]
   return args;
 }
 
+function friendlyError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/video is unavailable|private video/i.test(message)) return 'Videoclipul este indisponibil sau privat.';
+  if (/sign in to confirm your age|age-restricted/i.test(message)) return 'Videoclipul necesită autentificare din cauza restricției de vârstă.';
+  if (/HTTP Error 403/i.test(message)) return 'YouTube a refuzat temporar descărcarea. Reîncearcă peste câteva momente.';
+  if (/ffmpeg/i.test(message)) return 'Nu s-a putut combina audio și video. Verifică instalarea FFmpeg.';
+  if (/ENOSPC|no space left/i.test(message)) return 'NUC-ul nu mai are spațiu suficient pentru descărcare.';
+  if (/network|connection|timed out|ENET/i.test(message)) return 'Nu s-a putut contacta YouTube. Verifică conexiunea la internet și reîncearcă.';
+  return 'Descărcarea nu a putut fi finalizată. Verifică jurnalul addonului pentru detalii.';
+}
+
 async function runYtDlp(url: string, options: YtDlpOptions = {}): Promise<string> {
   const { stdout } = await execFileAsync(ytDlpBinary, createYtDlpArguments(url, options), {
     maxBuffer: 10 * 1024 * 1024,
     windowsHide: true,
   });
   return stdout;
+}
+
+function updateProgress(job: DownloadJob, output: string): void {
+  const percent = output.match(/\[download\]\s+(\d+(?:\.\d+)?)%/);
+  if (percent) job.progress = Math.min(100, Number(percent[1]));
+  const speed = output.match(/\bat\s+(.+?)\s+ETA\b/);
+  if (speed && !/Unknown/i.test(speed[1])) job.speed = speed[1].trim();
+  if (/Merger|Merging formats|Extracting audio/i.test(output)) job.stage = 'Se combină audio și video…';
+  else if (percent) job.stage = 'Se descarcă…';
+}
+
+function runDownload(url: string, options: YtDlpOptions, job: DownloadJob): Promise<void> {
+  const args = [...createYtDlpArguments(url, options), '--newline'];
+  job.stage = 'Se pregătește descărcarea…';
+
+  return new Promise((resolve, reject) => {
+    if (job.cancelled) return reject(new Error('Download cancelled'));
+    const child = spawn(ytDlpBinary, args, { detached: process.platform !== 'win32' });
+    job.process = child;
+    let output = '';
+    const capture = (chunk: Buffer) => {
+      const text = chunk.toString();
+      output += text;
+      updateProgress(job, text);
+    };
+    child.stdout.on('data', capture);
+    child.stderr.on('data', capture);
+    child.once('error', reject);
+    child.once('close', (code) => {
+      job.process = undefined;
+      if (job.cancelled) return reject(new Error('Download cancelled'));
+      if (code === 0) return resolve();
+      reject(new Error(output || `yt-dlp exited with code ${code}`));
+    });
+  });
+}
+
+async function terminateDownloadProcess(child: ChildProcessWithoutNullStreams | undefined): Promise<void> {
+  if (!child?.pid) return;
+  try {
+    // The detached process has its own group, which includes its FFmpeg child.
+    process.kill(-child.pid, 'SIGTERM');
+  } catch {
+    try { child.kill('SIGTERM'); } catch { /* Process already stopped. */ }
+  }
 }
 
 async function updateYtDlp(): Promise<void> {
@@ -71,17 +139,18 @@ function updateYtDlpOnce(): Promise<void> {
   return ytDlpUpdate;
 }
 
-async function downloadWithRecovery(url: string, options: YtDlpOptions): Promise<string> {
+async function downloadWithRecovery(url: string, options: YtDlpOptions, job: DownloadJob): Promise<void> {
   try {
-    return await runYtDlp(url, options);
+    await runDownload(url, options, job);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (!message.includes('HTTP Error 403')) throw error;
+    if (job.cancelled || !message.includes('HTTP Error 403')) throw error;
 
     // YouTube changes its delivery API regularly. Update the extractor once,
     // then retry the original request before exposing an error to the user.
     await updateYtDlpOnce();
-    return runYtDlp(url, options);
+    job.stage = 'Actualizare yt-dlp și reîncercare…';
+    await runDownload(url, options, job);
   }
 }
 
@@ -93,21 +162,28 @@ if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
 }
 
-// Curățare fișiere orfane o dată la 10 minute (ex: dacă procesul se întrerupe sau utilizatorul închide tab-ul)
-setInterval(() => {
-    fs.readdir(tempDir, (err, files) => {
-        if (err) return;
-        const now = Date.now();
-        files.forEach(f => {
-            const filePath = join(tempDir, f);
-            fs.stat(filePath, (e, stats) => {
-                if (!e && (now - stats.mtimeMs > 3600000)) { // 1 oră
-                    fs.unlink(filePath, () => {});
-                }
-            });
-        });
-    });
-}, 600000);
+function removeJobFiles(fileId: string): void {
+  for (const file of fs.readdirSync(tempDir)) {
+    if (file === `${fileId}.mp4` || file === `${fileId}.mp3` || file.startsWith(`${fileId}.`)) {
+      try { fs.unlinkSync(join(tempDir, file)); } catch { /* best-effort cleanup */ }
+    }
+  }
+}
+
+function cleanupTempFiles(): void {
+  const now = Date.now();
+  for (const file of fs.readdirSync(tempDir)) {
+    try {
+      const filePath = join(tempDir, file);
+      const age = now - fs.statSync(filePath).mtimeMs;
+      const maxAge = file.endsWith('.part') ? 15 * 60_000 : 60 * 60_000;
+      if (age > maxAge) fs.unlinkSync(filePath);
+    } catch { /* A simultaneous download may remove a file first. */ }
+  }
+}
+
+cleanupTempFiles();
+setInterval(cleanupTempFiles, 10 * 60_000);
 
 app.get('/api/info', async (req, res) => {
   const url = req.query['url'] as string;
@@ -134,12 +210,12 @@ app.get('/api/info', async (req, res) => {
       resolutions: resolutions
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: friendlyError(error) });
   }
 });
 
 // Stocăm task-urile de descărcare
-const activeJobs = new Map<string, { status: string, error?: string, filename?: string }>();
+const activeJobs = new Map<string, DownloadJob>();
 
 // Ruta care inițiază descărcarea și muxarea pe server
 app.get('/api/prepare', (req, res) => {
@@ -153,12 +229,19 @@ app.get('/api/prepare', (req, res) => {
   }
 
   const fileId = randomUUID();
-  activeJobs.set(fileId, { status: 'processing' });
+  const job: DownloadJob = { status: 'processing', progress: 0, stage: 'În așteptare…' };
+  activeJobs.set(fileId, job);
   
   const processDownload = async () => {
     try {
       const info: any = JSON.parse(await runYtDlp(url, { dumpJson: true }));
       const title = (info.title || 'video').replace(/[^\w\s-]/gi, '_');
+      if (job.cancelled) {
+        job.status = 'cancelled';
+        job.stage = 'Descărcare anulată.';
+        removeJobFiles(fileId);
+        return;
+      }
       
       let filename = '';
       let options: YtDlpOptions = {};
@@ -180,12 +263,29 @@ app.get('/api/prepare', (req, res) => {
           options.output = join(tempDir, `${fileId}.mp4`);
       }
 
-      await downloadWithRecovery(url, options);
+      await downloadWithRecovery(url, options, job);
 
-      activeJobs.set(fileId, { status: 'done', filename });
+      if (job.cancelled) {
+        job.status = 'cancelled';
+        job.stage = 'Descărcare anulată.';
+        removeJobFiles(fileId);
+        return;
+      }
+
+      job.status = 'done';
+      job.filename = filename;
+      job.progress = 100;
+      job.stage = 'Gata pentru transfer.';
     } catch (error: any) {
       console.error("BACKGROUND JOB ERROR:", error);
-      activeJobs.set(fileId, { status: 'error', error: error.message || String(error) });
+      removeJobFiles(fileId);
+      if (job.cancelled) {
+        job.status = 'cancelled';
+        job.stage = 'Descărcare anulată.';
+      } else {
+        job.status = 'error';
+        job.error = friendlyError(error);
+      }
     }
   };
 
@@ -202,7 +302,23 @@ app.get('/api/status', (req, res) => {
   if (!job) {
     return res.status(404).json({ error: 'Job not found' });
   }
-  res.json(job);
+  const { process: _process, cancelled: _cancelled, ...publicJob } = job;
+  res.json(publicJob);
+});
+
+app.post('/api/cancel', async (req, res) => {
+  const id = req.query['id'] as string;
+  const job = activeJobs.get(id);
+  if (!job) return res.status(404).json({ error: 'Descărcarea nu a fost găsită.' });
+  if (job.status !== 'processing') return res.status(409).json({ error: 'Descărcarea nu mai poate fi anulată.' });
+
+  job.cancelled = true;
+  job.stage = 'Se anulează descărcarea…';
+  await terminateDownloadProcess(job.process);
+  removeJobFiles(id);
+  job.status = 'cancelled';
+  job.stage = 'Descărcare anulată.';
+  res.json({ ok: true });
 });
 
 // Ruta de transmitere a fișierului rezultat

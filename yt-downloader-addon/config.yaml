@@ -1,5 +1,5 @@
 name: "YT Downloader"
-version: "4.0.2"
+version: "4.0.3"
 slug: "yt_downloader"
 description: "Aplicație web pentru descărcarea videoclipurilor de pe YouTube. Apare direct în meniul lateral (Side Panel) prin Ingress."
 url: "https://github.com/vlad2939/home-assistant-addons"

@@ -31,9 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const videoThumb = document.getElementById('videoThumb');
   const videoTitle = document.getElementById('videoTitle');
   const formatsGrid = document.getElementById('formatsGrid');
+  const downloadProgress = document.getElementById('downloadProgress');
+  const downloadStage = document.getElementById('downloadStage');
+  const downloadDetails = document.getElementById('downloadDetails');
+  const downloadProgressBar = document.getElementById('downloadProgressBar');
+  const cancelDownloadBtn = document.getElementById('cancelDownloadBtn');
 
   let isLoading = false;
   let currentUrl = '';
+  let activeDownloadId = null;
 
   const setLoading = (loading) => {
     isLoading = loading;
@@ -63,6 +69,16 @@ document.addEventListener('DOMContentLoaded', () => {
     errorContainer.classList.remove('flex');
   };
 
+  const setProgress = (status) => {
+    const percent = Math.max(0, Math.min(100, Number(status.progress) || 0));
+    downloadProgress.classList.remove('hidden');
+    downloadStage.textContent = status.stage || 'Se procesează descărcarea…';
+    downloadDetails.textContent = `${percent.toFixed(percent % 1 ? 1 : 0)}%${status.speed ? ` · ${status.speed}` : ''}`;
+    downloadProgressBar.style.width = `${percent}%`;
+  };
+
+  const hideProgress = () => downloadProgress.classList.add('hidden');
+
   const fetchInfo = async () => {
     const url = urlInput.value.trim();
     if (!url) {
@@ -71,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     currentUrl = url;
+    hideProgress();
     setLoading(true);
     hideError();
     videoInfoContainer.classList.add('hidden');
@@ -182,6 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const downloadMuxed = async (height, type = 'video_audio') => {
     setLoading(true);
+    hideError();
+    setProgress({ progress: 0, stage: 'Se pregătește descărcarea…' });
 
     let typeText = 'Procesare...';
     if (type === 'audio_only') typeText = 'Pregătire MP3...';
@@ -199,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       const fileId = data.id;
+      activeDownloadId = fileId;
       
       const checkStatus = async () => {
           try {
@@ -206,22 +226,33 @@ document.addEventListener('DOMContentLoaded', () => {
               const statusData = await statusRes.json();
               
               if (statusData.status === 'processing') {
-                  searchBtnText.textContent = `Procesare... (${type === 'audio_only' ? 'MP3' : height + 'p'})`;
-                  setTimeout(checkStatus, 3000); // Polling la 3 secunde
+                  setProgress(statusData);
+                  searchBtnText.textContent = `${Math.round(statusData.progress || 0)}%`;
+                  setTimeout(checkStatus, 1000);
               } else if (statusData.status === 'done') {
+                  setProgress(statusData);
                   searchBtnText.textContent = 'Transfer browser...';
                   window.location.href = `./api/file?id=${fileId}&filename=${encodeURIComponent(statusData.filename)}`;
                   
                   setTimeout(() => {
                       setLoading(false);
+                      hideProgress();
+                      activeDownloadId = null;
                       searchBtnText.textContent = 'Caută';
                   }, 3000);
+              } else if (statusData.status === 'cancelled') {
+                  hideProgress();
+                  activeDownloadId = null;
+                  setLoading(false);
+                  searchBtnText.textContent = 'Caută';
               } else if (statusData.status === 'error') {
                   throw new Error(statusData.error || 'Eroare la procesarea internă.');
               }
           } catch (err) {
               console.error(err);
               showError(err.message);
+              hideProgress();
+              activeDownloadId = null;
               setLoading(false);
               searchBtnText.textContent = 'Caută';
           }
@@ -233,10 +264,32 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       showError(err.message);
+      hideProgress();
+      activeDownloadId = null;
       setLoading(false);
       searchBtnText.textContent = 'Caută';
     }
   };
+
+  cancelDownloadBtn.addEventListener('click', async () => {
+    if (!activeDownloadId) return;
+    cancelDownloadBtn.disabled = true;
+    cancelDownloadBtn.textContent = 'Se anulează…';
+    try {
+      const response = await fetch(`./api/cancel?id=${encodeURIComponent(activeDownloadId)}`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Nu am putut anula descărcarea.');
+      downloadStage.textContent = 'Descărcare anulată.';
+      hideProgress();
+      activeDownloadId = null;
+      setLoading(false);
+    } catch (err) {
+      showError(err.message || 'Nu am putut anula descărcarea.');
+    } finally {
+      cancelDownloadBtn.disabled = false;
+      cancelDownloadBtn.textContent = 'Anulează';
+    }
+  });
 
   searchBtn.addEventListener('click', fetchInfo);
   urlInput.addEventListener('keyup', (e) => {
