@@ -4,10 +4,59 @@ import youtubedl from 'youtube-dl-exec';
 import cors from 'cors';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const execFileAsync = promisify(execFile);
+const ytDlpBinary = join(
+  process.cwd(),
+  'node_modules',
+  'youtube-dl-exec',
+  'bin',
+  process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp',
+);
+
+let ytDlpUpdate: Promise<void> | undefined;
+
+async function updateYtDlp(): Promise<void> {
+  if (!fs.existsSync(ytDlpBinary)) return;
+
+  try {
+    const { stdout } = await execFileAsync(ytDlpBinary, ['-U'], {
+      timeout: 120_000,
+      windowsHide: true,
+    });
+    console.log(`yt-dlp update check: ${stdout.trim()}`);
+  } catch (error) {
+    // The add-on remains available even if GitHub cannot be reached at startup.
+    console.warn('yt-dlp update check skipped:', error instanceof Error ? error.message : error);
+  }
+}
+
+function updateYtDlpOnce(): Promise<void> {
+  ytDlpUpdate ??= updateYtDlp();
+  return ytDlpUpdate;
+}
+
+async function downloadWithRecovery(url: string, options: Record<string, unknown>): Promise<any> {
+  try {
+    return await youtubedl(url, options);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes('HTTP Error 403')) throw error;
+
+    // YouTube changes its delivery API regularly. Update the extractor once,
+    // then retry the original request before exposing an error to the user.
+    await updateYtDlpOnce();
+    return youtubedl(url, options);
+  }
+}
+
+void updateYtDlpOnce();
 
 // Setăm un folder temporar pe NUC (un container Docker mapat) pentru preluarea formatelor
 const tempDir = join(process.cwd(), 'temp_downloads');
@@ -102,7 +151,7 @@ app.get('/api/prepare', (req, res) => {
           options.output = join(tempDir, `${fileId}.mp4`);
       }
 
-      await youtubedl(url, options);
+      await downloadWithRecovery(url, options);
 
       activeJobs.set(fileId, { status: 'done', filename });
     } catch (error: any) {

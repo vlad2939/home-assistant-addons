@@ -9,8 +9,10 @@ WORKDIR /app
 # Copiere fisierele de pachete
 COPY package*.json ./
 
-# Instalare dependente
-RUN npm install
+# Instalare dependente si actualizare yt-dlp la ultima versiune stabila.
+# Verificarea se repeta si la fiecare pornire a add-on-ului.
+RUN npm install \
+    && (./node_modules/youtube-dl-exec/bin/yt-dlp -U || true)
 
 # Copierea fișierelor proiectului
 COPY . .
