@@ -42,12 +42,12 @@ https://github.com/vlad2939/home-assistant-addons
 | --- | --- | --- | --- | --- | --- | --- |
 | Car Cost Dashboard | `car-cost-dashboard` | `car_cost_dashboard` | `1.5.5` | Da | `3000` | Stabil |
 | Home Cost Dashboard | `home-cost-dashboard` | `homecost` | `2026.8.0` | Da | `3000` | Stabil |
-| TubeDash | `tubedash-addon` | `tubedash` | `5.0.2` | Da | `3000` | Stabil |
+| TubeDash | `tubedash-addon` | `tubedash` | `5.0.6` | Da | `3000` | Stabil |
 | Full Web Server | `ha-webserver` | `full_web_server` | `1.0.4` | Da | `80` | Stabil |
 | WordPress Full Option | `ha-wordpress-addon` | `wordpress_full` | `1.0.2` | Nu | `80` | Stabil |
 | MyTube Playlist | `mytubeplaylist-addon` | `mytubeplaylist` | `2.0.0` | Da | `3000` | Stabil |
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.4` | Da | `3000` | Stabil |
-| MyTube Dash | `mytubedash-addon` | `mytubedash` | `2.0.5` | Da | `3000` | Stabil |
+| MyTube Dash | `mytubedash-addon` | `mytubedash` | `2.0.6` | Da | `3000` | Stabil |
 
 Legendă:
 
