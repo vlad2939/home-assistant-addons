@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchBtn = document.getElementById('searchBtn');
   const searchBtnText = document.getElementById('searchBtnText');
   const searchBtnIcon = document.getElementById('searchBtnIcon');
+  const clearUrlBtn = document.getElementById('clearUrlBtn');
   
   const errorContainer = document.getElementById('errorContainer');
   const errorText = document.getElementById('errorText');
@@ -40,6 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let isLoading = false;
   let currentUrl = '';
   let activeDownloadId = null;
+
+  const updateClearUrlButton = () => {
+    const hasUrl = urlInput.value.trim().length > 0;
+    clearUrlBtn.classList.toggle('hidden', !hasUrl);
+    clearUrlBtn.classList.toggle('flex', hasUrl);
+  };
 
   const setLoading = (loading) => {
     isLoading = loading;
@@ -292,11 +299,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   searchBtn.addEventListener('click', fetchInfo);
+  clearUrlBtn.addEventListener('click', () => {
+    urlInput.value = '';
+    currentUrl = '';
+    updateClearUrlButton();
+    urlInput.focus();
+  });
+  urlInput.addEventListener('input', updateClearUrlButton);
   urlInput.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') {
       fetchInfo();
     }
   });
+  updateClearUrlButton();
 
   // Readme Popup Logic
   const readmeBtn = document.getElementById('readmeBtn');

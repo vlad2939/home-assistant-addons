@@ -63,11 +63,14 @@
           type="text" 
           id="urlInput"
           placeholder="Lipește linkul YouTube aici..." 
-          class="w-full bg-transparent h-14 pl-14 pr-32 md:pr-40 text-slate-800 dark:text-slate-100 text-base font-medium focus:outline-none placeholder-slate-400 dark:placeholder-slate-500"
+          class="w-full bg-transparent h-14 pl-14 pr-52 text-slate-800 dark:text-slate-100 text-base font-medium focus:outline-none placeholder-slate-400 dark:placeholder-slate-500"
         />
+        <button id="clearUrlBtn" type="button" aria-label="Șterge adresa" title="Șterge adresa" class="hidden absolute right-40 w-8 h-8 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors items-center justify-center">
+          <span class="material-icons text-[19px]">close</span>
+        </button>
         <button 
           id="searchBtn"
-          class="absolute right-1.5 top-1.5 bottom-1.5 px-6 bg-orange-600 dark:bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-500 dark:hover:bg-orange-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all text-sm tracking-wide shadow-md shadow-orange-500/20"
+          class="absolute right-1.5 top-1.5 bottom-1.5 w-36 px-3 bg-orange-600 dark:bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-500 dark:hover:bg-orange-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all text-sm tracking-wide shadow-md shadow-orange-500/20"
         >
           <span id="searchBtnIcon" class="material-icons text-[18px] hidden animate-spin">autorenew</span>
           <span id="searchBtnText">Caută</span>
