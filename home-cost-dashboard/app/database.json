@@ -2,6 +2,22 @@
   "rawData": [
     {
       "AN": 2026,
+      "LUNA": 9,
+      "IMPOZIT": 0,
+      "CURENT_Cost": 245,
+      "CURENT_KWh": 220,
+      "GAZE_Parter_Cost": 19.28,
+      "GAZE_Parter_KWh": 66,
+      "GAZE_Etaj_Cost": 6.78,
+      "GAZE_Etaj_KWh": 22,
+      "APA_Cost": 101.12,
+      "APA_m3": 7,
+      "Internet": 134.08,
+      "GUNOI": 26.96,
+      "Telefon": 0
+    },
+    {
+      "AN": 2026,
       "LUNA": 8,
       "IMPOZIT": 0,
       "CURENT_Cost": 241.87,
