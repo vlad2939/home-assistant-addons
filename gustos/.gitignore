@@ -1,0 +1,11 @@
+dev-data/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db

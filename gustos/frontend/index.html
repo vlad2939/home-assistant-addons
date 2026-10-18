@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Gustos</title>
+    <script>
+      // Aplică tema salvată înainte de afișare, ca să nu „clipească” pagina.
+      (function () {
+        var s = {};
+        try { s = JSON.parse(localStorage.getItem("gustos-appearance")) || {}; } catch (e) {}
+        var t = s.theme || "auto";
+        if (t === "auto") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = t;
+        document.documentElement.dataset.accent = s.accent || "orange";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

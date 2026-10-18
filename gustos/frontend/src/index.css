@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+/*
+ * Teme Gustos: variabile CSS pe <html>.
+ *   data-theme  = light | dark   (setat din „auto” după sistem, vezi theme.js)
+ *   data-accent = orange | red | green | blue | purple
+ * Schimbarea atributelor se aplică instant în toată aplicația, inclusiv în modale.
+ */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f3ef;
+  --surface: #ffffff;
+  --surface-2: #efebe5;
+  --border: #e2dcd3;
+  --text: #221e1a;
+  --muted: #6e665d;
+  --overlay: rgb(246 243 239 / 0.62);
+  --shadow: 0 1px 2px rgb(40 30 20 / 0.06), 0 6px 20px rgb(40 30 20 / 0.07);
+
+  --accent-orange: #e2620b;
+  --accent-red: #d22f3d;
+  --accent-green: #23874a;
+  --accent-blue: #2a66d6;
+  --accent-purple: #8247d6;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141416;
+  --surface: #1e1e22;
+  --surface-2: #28282d;
+  --border: #34343a;
+  --text: #edeae5;
+  --muted: #a39d95;
+  --overlay: rgb(10 10 12 / 0.62);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.3);
+
+  --accent-orange: #fb8a35;
+  --accent-red: #f2606b;
+  --accent-green: #4cc27a;
+  --accent-blue: #659bf6;
+  --accent-purple: #ab83f2;
+}
+
+:root {
+  --accent: var(--accent-orange);
+}
+:root[data-accent="red"] { --accent: var(--accent-red); }
+:root[data-accent="green"] { --accent: var(--accent-green); }
+:root[data-accent="blue"] { --accent: var(--accent-blue); }
+:root[data-accent="purple"] { --accent: var(--accent-purple); }
+
+:root {
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent) 85%, var(--text));
+  --on-accent: #ffffff;
+}
+:root[data-theme="dark"] {
+  --on-accent: #17120d;
+}
+
+/* Clase Tailwind legate de variabile: bg-bg, bg-surface, text-muted, bg-accent, border-border ... */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-strong: var(--accent-strong);
+  --color-on-accent: var(--on-accent);
+  --shadow-card: var(--shadow);
+  --font-sans: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in { animation: fade-in 0.18s ease-out; }
+.animate-pop-in { animation: pop-in 0.2s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Manualul de utilizare (Markdown afișat în modal) */
+.manual {
+  line-height: 1.65;
+}
+.manual h2 {
+  margin: 1.75rem 0 0.6rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+.manual h2:first-child {
+  margin-top: 0;
+}
+.manual h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-weight: 600;
+}
+.manual p {
+  margin: 0.6rem 0;
+}
+.manual ul,
+.manual ol {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.4rem;
+}
+.manual ul {
+  list-style: disc;
+}
+.manual ol {
+  list-style: decimal;
+}
+.manual li {
+  margin: 0.3rem 0;
+}
+.manual li::marker {
+  color: var(--accent);
+}
+.manual strong {
+  font-weight: 600;
+}
+.manual hr {
+  margin: 1.75rem 0 1rem;
+  border-color: var(--border);
+}
+.manual hr + p {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
