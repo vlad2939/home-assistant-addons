@@ -5,6 +5,11 @@ import TopBar from "./TopBar.jsx";
 import SideBar from "./SideBar.jsx";
 import LogoLightbox from "./LogoLightbox.jsx";
 
+/** Mențiunea de autor, la baza panoului cu categorii. */
+function Copyright() {
+  return <footer className="mt-auto px-6 pb-4 pt-6 text-xs text-muted">© concept și realizare vlad39</footer>;
+}
+
 export default function Layout() {
   const [logoOpen, setLogoOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -24,8 +29,9 @@ export default function Layout() {
       <TopBar onLogoClick={() => setLogoOpen(true)} onMenuClick={() => setDrawerOpen(true)} />
 
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-64 shrink-0 overflow-y-auto border-r border-border bg-surface lg:block">
+        <aside className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-surface lg:flex">
           <SideBar />
+          <Copyright />
         </aside>
 
         <main className="min-w-0 flex-1 overflow-y-auto" id="continut">
@@ -35,17 +41,13 @@ export default function Layout() {
         </main>
       </div>
 
-      <footer className="shrink-0 border-t border-border bg-surface py-2 text-center text-xs text-muted">
-        © concept și realizare vlad39
-      </footer>
-
       {drawerOpen && (
         <div
           className="fixed inset-0 z-40 backdrop-blur-md animate-fade-in lg:hidden"
           style={{ background: "var(--overlay)" }}
           onClick={(e) => e.target === e.currentTarget && setDrawerOpen(false)}
         >
-          <aside className="h-full w-72 max-w-[85vw] overflow-y-auto border-r border-border bg-surface shadow-card">
+          <aside className="flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-border bg-surface shadow-card">
             <div className="flex justify-end p-2">
               <button
                 type="button"
@@ -57,6 +59,7 @@ export default function Layout() {
               </button>
             </div>
             <SideBar onNavigate={() => setDrawerOpen(false)} />
+            <Copyright />
           </aside>
         </div>
       )}

@@ -96,8 +96,8 @@ export default function TopBar({ onLogoClick, onMenuClick }) {
       </nav>
 
       <div className="flex items-center gap-1 border-l border-border pl-2 lg:ml-auto lg:border-l-0 lg:pl-0">
-        <ThemeButton />
         <FullscreenButton />
+        <ThemeButton />
       </div>
     </header>
   );

@@ -4,7 +4,7 @@ Proiect: Gustos – aplicație web de rețete, add-on Home Assistant OS.
 Stack: Python FastAPI + SQLite (WAL, FTS5) + React (Vite) + Tailwind.
 Utilizator: un singur utilizator, rețea locală, fără autentificare. Interfață doar în română.
 Port: 8099. Date persistente: /data (gustos.db, photos/). În dezvoltare: ./dev-data (în .gitignore).
-Layout: TopBar (logo clickabil, Acasă, Rețete, Adaugă, Import, Setări), SideBar cu categorii, Footer "© concept și realizare vlad39".
+Layout: TopBar (logo clickabil, Acasă, Rețete, Adaugă, Import, Setări; în dreapta: ecran complet, temă), SideBar cu categorii, cu "© concept și realizare vlad39" la baza lui (fără bară de subsol).
 Modale (ESC și click închid, fundal blurat în ton cu tema): logo lightbox fără text, manual_utilizare.md, Despre.
 Teme: dark/light + 5 culori de accent (portocaliu implicit), prin variabile CSS.
 Utilizatorul nu are cunoștințe de programare: explică simplu, dă comenzi complete copy-paste.

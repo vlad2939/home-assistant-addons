@@ -3,6 +3,7 @@
 ## 0.9.2 – 19.10.2026
 
 - Bara de sus: butoane pentru ecran complet (ca F11) și schimbarea temei luminoasă / întunecată.
+- Mențiunea „© concept și realizare vlad39” mutată la baza panoului cu categorii; bara de subsol a fost eliminată.
 
 ## 0.9.1 – 19.10.2026
 
