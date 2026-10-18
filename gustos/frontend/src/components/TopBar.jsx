@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
-import { Download, House, Menu, PlusCircle, Settings, UtensilsCrossed } from "lucide-react";
+import { Download, House, Maximize, Menu, Minimize, Moon, PlusCircle, Settings, Sun, UtensilsCrossed } from "lucide-react";
+import { useApp } from "../AppContext.jsx";
 
 export const NAV_ITEMS = [
   { to: "/", label: "Acasă", icon: House, end: true },
@@ -8,6 +10,52 @@ export const NAV_ITEMS = [
   { to: "/import", label: "Import", icon: Download },
   { to: "/setari", label: "Setări", icon: Settings },
 ];
+
+const toolButton = "flex h-11 w-11 items-center justify-center rounded-xl text-muted transition-colors hover:bg-surface-2 hover:text-text";
+
+/** Tema afișată acum (light / dark), inclusiv când în Setări este „Automat”. */
+function useShownTheme() {
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme);
+  useEffect(() => {
+    const observer = new MutationObserver(() => setTheme(document.documentElement.dataset.theme));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
+  return theme;
+}
+
+/** Ecran complet (ca F11). Butonul lipsește dacă browserul nu permite. */
+function FullscreenButton() {
+  const supported = Boolean(document.documentElement.requestFullscreen);
+  const [active, setActive] = useState(Boolean(document.fullscreenElement));
+
+  useEffect(() => {
+    const onChange = () => setActive(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  if (!supported) return null;
+  const toggle = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {});
+  const label = active ? "Ieși din ecran complet" : "Ecran complet";
+  return (
+    <button type="button" onClick={toggle} className={toolButton} aria-label={label} title={label}>
+      {active ? <Minimize size={21} /> : <Maximize size={21} />}
+    </button>
+  );
+}
+
+function ThemeButton() {
+  const { updateAppearance } = useApp();
+  const shown = useShownTheme();
+  const next = shown === "dark" ? "light" : "dark";
+  const label = next === "dark" ? "Temă întunecată" : "Temă luminoasă";
+  return (
+    <button type="button" onClick={() => updateAppearance({ theme: next }).catch(() => {})} className={toolButton} aria-label={label} title={label}>
+      {next === "dark" ? <Moon size={21} /> : <Sun size={21} />}
+    </button>
+  );
+}
 
 export default function TopBar({ onLogoClick, onMenuClick }) {
   return (
@@ -34,6 +82,7 @@ export default function TopBar({ onLogoClick, onMenuClick }) {
             key={to}
             to={to}
             end={end}
+            title={label}
             className={({ isActive }) =>
               `flex items-center gap-2 rounded-xl px-2.5 py-2.5 text-[15px] font-medium transition-colors lg:px-3.5 ${
                 isActive ? "bg-accent-soft text-accent-strong" : "text-muted hover:bg-surface-2 hover:text-text"
@@ -45,6 +94,11 @@ export default function TopBar({ onLogoClick, onMenuClick }) {
           </NavLink>
         ))}
       </nav>
+
+      <div className="flex items-center gap-1 border-l border-border pl-2 lg:ml-auto lg:border-l-0 lg:pl-0">
+        <ThemeButton />
+        <FullscreenButton />
+      </div>
     </header>
   );
 }

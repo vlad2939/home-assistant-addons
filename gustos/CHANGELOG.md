@@ -1,5 +1,9 @@
 # Istoric versiuni
 
+## 0.9.2 – 19.10.2026
+
+- Bara de sus: butoane pentru ecran complet (ca F11) și schimbarea temei luminoasă / întunecată.
+
 ## 0.9.1 – 19.10.2026
 
 - Corectură instalare: imaginea de bază Python este fixată în Dockerfile (Supervisor folosea imaginea Alpine fără Python, iar instalarea eșua cu „pip: not found”).
