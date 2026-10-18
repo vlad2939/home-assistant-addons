@@ -1,5 +1,9 @@
 # Istoric versiuni
 
+## 0.9.1 – 19.10.2026
+
+- Corectură instalare: imaginea de bază Python este fixată în Dockerfile (Supervisor folosea imaginea Alpine fără Python, iar instalarea eșua cu „pip: not found”).
+
 ## 0.9.0 – 19.10.2026
 
 Prima versiune instalabilă pe Home Assistant (test înainte de 1.0.0).

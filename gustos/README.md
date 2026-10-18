@@ -1,7 +1,5 @@
 # Gustos
 
-![Gustos](logo.png)
-
 Aplicație web personală pentru rețete culinare, ca add-on Home Assistant OS. Rulează în rețeaua locală și se deschide în Chrome, pe laptop, PC sau tabletă.
 
 ## Funcții

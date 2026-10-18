@@ -1,6 +1,7 @@
 # Gustos – add-on Home Assistant. Imagine Debian cu Python (pachete precompilate pentru Pillow, lxml, HEIC).
-ARG BUILD_FROM=python:3.12-slim-bookworm
-FROM ${BUILD_FROM}
+# Imaginea de bază este scrisă direct aici: Supervisor-ul trimite altfel propria imagine Alpine (fără Python)
+# prin BUILD_FROM, indiferent de build.yaml.
+FROM python:3.12-slim-bookworm
 
 ENV LANG=C.UTF-8 \
     PYTHONDONTWRITEBYTECODE=1 \
