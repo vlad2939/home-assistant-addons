@@ -1,5 +1,11 @@
 # Istoric versiuni
 
+## 1.0.0 – 19.10.2026
+
+Prima versiune stabilă. Testul de acceptanță (13 criterii) a trecut pe NUC, PC, laptop și tabletă: `docs/test-acceptanta-etapa10.md`.
+
+- Fără modificări de funcționalitate față de 0.9.2.
+
 ## 0.9.2 – 19.10.2026
 
 - Bara de sus: butoane pentru ecran complet (ca F11) și schimbarea temei luminoasă / întunecată.
