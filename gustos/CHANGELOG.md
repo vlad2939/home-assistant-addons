@@ -1,5 +1,17 @@
 # Istoric versiuni
 
+## 2.0.0 – 20.10.2026
+
+Versiunea 2: meniuri, cumpărături, PDF și galerie foto. Baza de date trece automat la versiunea 6; backup-urile vechi se pot restaura în continuare.
+
+- **Meniu** (modul nou în bara de sus): meniuri săptămânale (luni–duminică × mic dejun, prânz, cină) și evenimente (Crăciun, zi de naștere …, pe feluri), cu numărul de persoane și porții pe fiecare rețetă. Căutare de rețete la adăugare, copiere în săptămâna următoare.
+- **PDF / tipărire** pentru rețetă (cu porțiile alese), meniu (tabel pe zile și mese sau pe feluri) și lista de cumpărături (pe raioane, cu căsuțe). Pagină A4 luminoasă, apoi fereastra de tipărire a browserului („Salvează ca PDF”).
+- **Cumpărături** (modul nou în bara de sus): o listă comună, completată din rețetă (cu porțiile alese), din meniu sau de mână. Ingredientele identice se adună (g / kg, ml / l), produsele se grupează pe raioane, se bifează în magazin; lista se actualizează singură pe toate dispozitivele. Produsele la bucată se rotunjesc în sus.
+- Bara de sus: ordinea Acasă, Rețete, Adaugă, Import, Meniu, Cumpărături, Setări. Pe tabletă, primele patru își păstrează textul, iar Meniu, Cumpărături și Setări rămân doar cu pictograme (textul apare de la 1280 px).
+- **Galerie foto**: până la 30 de poze în plus la fiecare rețetă. Se adaugă (mai multe odată sau din cameră), se șterg și se alege poza principală doar la Editează; pe pagina rețetei pozele se văd pe tot ecranul, cu săgeți și glisare. Pozele din galerie intră în export / restaurare.
+- **Setări**: Aspect și Ajutor într-un singur card compact; Backup sub Traducere, cu cardurile aliniate.
+- Modulul Cumpărături va fi rafinat într-o versiune următoare.
+
 ## 1.5.0 – 20.10.2026
 
 - **Traducere din engleză**: la rețetele importate în engleză, previzualizarea (și pagina Editează) are butonul **Tradu în română**. Se traduc titlul, descrierea, ingredientele, pașii și sfaturile; cantitățile, unitățile și poza rămân. **Revino la textul în engleză** anulează traducerea.

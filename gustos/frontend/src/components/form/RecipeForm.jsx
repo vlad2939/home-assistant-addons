@@ -7,7 +7,7 @@ import StepsEditor from "./StepsEditor.jsx";
 import TagInput from "./TagInput.jsx";
 
 /** Formularul comun pentru Adaugă, Editează și (în etapa 7) previzualizarea importului. */
-export default function RecipeForm({ form, setForm, photo, setPhoto, currentPhoto, errors }) {
+export default function RecipeForm({ form, setForm, photo, setPhoto, currentPhoto, errors, afterPhoto = null }) {
   const { categories } = useApp();
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   const number = (field, label, placeholder) => (
@@ -26,6 +26,7 @@ export default function RecipeForm({ form, setForm, photo, setPhoto, currentPhot
   return (
     <div className="space-y-6">
       <PhotoPicker currentPhoto={currentPhoto} value={photo} onChange={setPhoto} />
+      {afterPhoto}
 
       <FormSection
         title="Informații"

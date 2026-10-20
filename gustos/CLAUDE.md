@@ -4,11 +4,15 @@ Proiect: Gustos – aplicație web de rețete, add-on Home Assistant OS.
 Stack: Python FastAPI + SQLite (WAL, FTS5) + React (Vite) + Tailwind.
 Utilizator: un singur utilizator, rețea locală, fără autentificare. Interfață doar în română.
 Port: 8099. Date persistente: /data (gustos.db, photos/). În dezvoltare: ./dev-data (în .gitignore).
-Layout: TopBar (logo clickabil, titlul „Gustos” cu efect shimmer, Acasă, Rețete, Adaugă, Import, Setări; în dreapta: ecran complet, temă), SideBar (Toate, Favorite, Rețetele mele, categorii), cu separator și "© concept și realizare vlad39" la baza lui (fără bară de subsol).
+Layout: TopBar (logo clickabil, titlul „Gustos” cu efect shimmer, Acasă, Rețete, Adaugă, Import cu text mereu, apoi Meniu, Cumpărături, Setări cu text de la xl; în dreapta: ecran complet, temă), SideBar (Toate, Favorite, Rețetele mele, categorii), cu separator și "© concept și realizare vlad39" la baza lui (fără bară de subsol).
 Import în engleză: unități metrice + „Tradu în română” (services/translate.py: OPUS-MT local prin CTranslate2 sau DeepL; model în /data/models).
+Regulă UI: tot ce modifică (poze, poza principală, traducere, marcaje, rețetele unui meniu) se face doar în paginile de editare; paginile de vizualizare rămân doar pentru citit (excepție: ♥ și Șterge).
+Meniu (v2): /meniu, săptămână (zile × mese) sau eveniment (pe feluri), tabelele menus / menu_items.
+Cumpărături (v2): /cumparaturi, o listă comună (shopping_items), adunare pe denumire + unitate, raioane în services/shopping.py.
 Pagina rețetei: video (YouTube / Vimeo, încărcat la click) și modul „Gătesc acum” (ecran mereu aprins: Wake Lock sau clipul mut din public/keep-awake.*).
 Modale (ESC și click închid, fundal blurat în ton cu tema): logo lightbox fără text, manual_utilizare.md, Despre.
 Teme: dark/light + 5 culori de accent (portocaliu implicit), prin variabile CSS.
+Dispozitive: PC, laptop, tabletă (de la 800 px lățime). Telefonul nu se folosește: nu se optimizează nimic pentru el.
 Utilizatorul nu are cunoștințe de programare: explică simplu, dă comenzi complete copy-paste.
 După fiecare etapă: rulează testele, spune cum testez manual, așteaptă confirmarea mea.
 Nu pune parole, chei sau date personale în cod. Nu face commit pe dev-data/.

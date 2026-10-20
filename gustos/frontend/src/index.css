@@ -197,3 +197,20 @@
   color: var(--muted);
   font-size: 0.875rem;
 }
+
+/* Tipar / PDF: A4, fundal alb, fără tăieturi în mijlocul unui pas sau al unei zile */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  html,
+  body,
+  #root {
+    height: auto;
+    background: #fff;
+  }
+  .print-keep {
+    break-inside: avoid;
+  }
+}

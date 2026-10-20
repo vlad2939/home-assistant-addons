@@ -15,7 +15,7 @@ function formatSize(bytes) {
   return bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
-export default function BackupPanel() {
+export default function BackupPanel({ className = "" }) {
   const { refreshCatalog, reloadAppearance } = useApp();
   const fileRef = useRef(null);
   const [file, setFile] = useState(null);
@@ -55,6 +55,7 @@ export default function BackupPanel() {
 
   return (
     <Section
+      className={className}
       title="Backup"
       description="Exportul descarcă un fișier ZIP cu toate rețetele și pozele. Recomandare: un export după fiecare sesiune mare de adăugat rețete."
     >

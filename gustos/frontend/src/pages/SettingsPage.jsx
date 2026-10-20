@@ -6,7 +6,7 @@ import { enterFullscreen, fullscreenSupported, getFullscreenAtStart, setFullscre
 import PageHeader from "../components/PageHeader.jsx";
 import AboutModal from "../components/AboutModal.jsx";
 import ManualModal from "../components/ManualModal.jsx";
-import { Section, Switch } from "../components/settings/common.jsx";
+import { Switch } from "../components/settings/common.jsx";
 import CategoriesManager from "../components/settings/CategoriesManager.jsx";
 import TagsManager from "../components/settings/TagsManager.jsx";
 import TranslationSettings from "../components/settings/TranslationSettings.jsx";
@@ -20,7 +20,7 @@ function Row({ icon: Icon, label, hint, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="-mx-3 flex w-[calc(100%+1.5rem)] items-center gap-4 rounded-2xl px-3 py-3.5 text-left transition-colors hover:bg-surface-2"
+      className="-mx-3 flex w-[calc(100%+1.5rem)] items-center gap-4 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-surface-2"
     >
       <Icon size={22} className="text-accent" aria-hidden="true" />
       <span className="flex-1">
@@ -54,79 +54,99 @@ export default function SettingsPage() {
     <>
       <PageHeader title="Setări" />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <Section title="Aspect">
-          <p className="mb-2 text-sm font-medium text-muted">Temă</p>
-          <div className="mb-6 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Temă">
-            {THEMES.map(({ id, label }) => {
-              const Icon = THEME_ICONS[id];
-              const active = appearance.theme === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => change({ theme: id })}
-                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 px-3 py-4 font-medium transition-colors ${
-                    active ? "border-accent bg-accent-soft text-accent-strong" : "border-border hover:bg-surface-2"
-                  }`}
-                >
-                  <Icon size={24} aria-hidden="true" />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+        {/* Aspect și Ajutor: un singur card, compact, pe toată lățimea */}
+        <section className="rounded-3xl border border-border bg-surface p-5 shadow-card lg:p-6 xl:col-span-2">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_1px_minmax(0,1fr)] xl:gap-7">
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">Aspect</h2>
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-muted">Temă</p>
+                  <div className="flex gap-1.5" role="radiogroup" aria-label="Temă">
+                    {THEMES.map(({ id, label }) => {
+                      const Icon = THEME_ICONS[id];
+                      const active = appearance.theme === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => change({ theme: id })}
+                          className={`flex h-11 items-center gap-2 rounded-xl border-2 px-3 font-medium transition-colors ${
+                            active ? "border-accent bg-accent-soft text-accent-strong" : "border-border hover:bg-surface-2"
+                          }`}
+                        >
+                          <Icon size={18} aria-hidden="true" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-muted">Culoare de accent</p>
+                  <div className="flex h-11 items-center gap-2.5" role="radiogroup" aria-label="Culoare de accent">
+                    {ACCENTS.map(({ id, label }) => {
+                      const active = appearance.accent === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          aria-label={label}
+                          title={label}
+                          onClick={() => change({ accent: id })}
+                          className={`flex h-10 w-10 items-center justify-center rounded-full ring-offset-2 ring-offset-surface transition-transform hover:scale-105 ${
+                            active ? "ring-2 ring-text" : ""
+                          }`}
+                          style={{ background: `var(--accent-${id})` }}
+                        >
+                          {active && <Check size={20} color="var(--on-accent)" strokeWidth={3} aria-hidden="true" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {error && <p className="mt-3 text-sm text-[var(--accent-red)]">{error}</p>}
 
-          <p className="mb-2 text-sm font-medium text-muted">Culoare de accent</p>
-          <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Culoare de accent">
-            {ACCENTS.map(({ id, label }) => {
-              const active = appearance.accent === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  aria-label={label}
-                  title={label}
-                  onClick={() => change({ accent: id })}
-                  className={`flex h-14 w-14 items-center justify-center rounded-full ring-offset-2 ring-offset-surface transition-transform hover:scale-105 ${
-                    active ? "ring-2 ring-text" : ""
-                  }`}
-                  style={{ background: `var(--accent-${id})` }}
-                >
-                  {active && <Check size={26} color="var(--on-accent)" strokeWidth={3} aria-hidden="true" />}
-                </button>
-              );
-            })}
-          </div>
-          {error && <p className="mt-4 text-sm text-[var(--accent-red)]">{error}</p>}
-
-          {fullscreenSupported() && (
-            <div className="mt-6 flex items-center gap-4 border-t border-border pt-5">
-              <Maximize size={22} className="shrink-0 text-accent" aria-hidden="true" />
-              <span className="flex-1">
-                <span className="block font-medium">Pornește în ecran complet</span>
-                <span className="block text-sm text-muted">
-                  Doar pe acest dispozitiv. Browserul permite ecranul complet abia după o atingere, așa că Gustos trece în ecran complet la primul click.
-                </span>
-              </span>
-              <Switch checked={fullscreenAtStart} onChange={toggleFullscreenAtStart} label="Pornește în ecran complet" />
+              {fullscreenSupported() && (
+                <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
+                  <Maximize size={20} className="shrink-0 text-accent" aria-hidden="true" />
+                  <span className="min-w-0 flex-1">
+                    <span className="font-medium">Pornește în ecran complet</span>
+                    <span className="text-sm text-muted"> · doar pe acest dispozitiv, de la primul click</span>
+                  </span>
+                  <Switch checked={fullscreenAtStart} onChange={toggleFullscreenAtStart} label="Pornește în ecran complet" />
+                </div>
+              )}
             </div>
-          )}
-        </Section>
 
-        <Section title="Ajutor">
-          <Row icon={BookOpen} label="Manual de utilizare" hint="Cum folosești Gustos, pas cu pas" onClick={() => setManualOpen(true)} />
-          <Row icon={Info} label="Despre" hint="Versiune, tehnologii" onClick={() => setAboutOpen(true)} />
-        </Section>
+            <div className="h-px bg-border xl:h-auto" aria-hidden="true" />
+
+            <div>
+              <h2 className="mb-2 text-lg font-semibold">Ajutor</h2>
+              <Row
+                icon={BookOpen}
+                label="Manual de utilizare"
+                hint="Cum folosești Gustos, pas cu pas"
+                onClick={() => setManualOpen(true)}
+              />
+              <Row icon={Info} label="Despre" hint="Versiune, tehnologii" onClick={() => setAboutOpen(true)} />
+            </div>
+          </div>
+        </section>
 
         <CategoriesManager />
         <TagsManager />
         <ImportSitesManager />
-        <TranslationSettings />
-        <BackupPanel />
+        {/* Traducere și Backup unul sub altul; Backup umple restul, ca marginile de jos să se alinieze */}
+        <div className="flex flex-col gap-6">
+          <TranslationSettings />
+          <BackupPanel className="flex-1" />
+        </div>
       </div>
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <ManualModal open={manualOpen} onClose={() => setManualOpen(false)} />

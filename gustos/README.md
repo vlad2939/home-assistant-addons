@@ -12,6 +12,10 @@ Aplicație web personală pentru rețete culinare, ca add-on Home Assistant OS. 
 - Modul **„Gătesc acum”**: pașii unul câte unul, pe tot ecranul, cu ecranul mereu aprins.
 - **Video**: clipurile YouTube / Vimeo ale rețetelor se redau direct în pagină (preluate automat la import).
 - **Rețetele mele**: rețetele proprii, marcate cu „Rețeta mea”, au listă separată.
+- **Galerie foto**: până la 30 de poze la fiecare rețetă, vizualizate pe tot ecranul.
+- **Meniu** săptămânal (zile × mic dejun, prânz, cină) și pentru evenimente (Crăciun, zi de naștere …).
+- **Listă de cumpărături** comună, din rețete, meniuri sau scrisă de mână, pe raioane.
+- **PDF / tipărire** pentru rețete, meniuri și lista de cumpărături.
 - Teme **dark / light** și 5 culori de accent; editor de categorii și tag-uri.
 - **Export ZIP și restaurare**, cu copie de siguranță automată.
 - Manual de utilizare inclus, în română.

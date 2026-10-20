@@ -104,11 +104,13 @@ def update_recipe(conn: sqlite3.Connection, recipe_id: int, data: RecipeIn) -> N
 
 def delete_recipe(conn: sqlite3.Connection, recipe_id: int) -> None:
     photo = _require(conn, recipe_id)["photo"]
+    extra = [g["photo"] for g in gallery(conn, recipe_id)]
     with conn:
         conn.execute("DELETE FROM recipes WHERE id = ?", (recipe_id,))
         conn.execute("DELETE FROM recipes_fts WHERE rowid = ?", (recipe_id,))
         _delete_unused_tags(conn)
-    photos.delete_photo(photo)
+    for name in [photo, *extra]:
+        photos.delete_photo(name)
 
 
 def toggle_favorite(conn: sqlite3.Connection, recipe_id: int) -> bool:
@@ -129,6 +131,15 @@ def total_time(prep: int | None, cook: int | None) -> int | None:
     if prep is None and cook is None:
         return None
     return (prep or 0) + (cook or 0)
+
+
+def gallery(conn: sqlite3.Connection, recipe_id: int) -> list[dict]:
+    return [
+        dict(r)
+        for r in conn.execute(
+            "SELECT id, photo FROM recipe_photos WHERE recipe_id = ? ORDER BY position, id", (recipe_id,)
+        )
+    ]
 
 
 def get_recipe(conn: sqlite3.Connection, recipe_id: int) -> dict:
@@ -155,6 +166,7 @@ def get_recipe(conn: sqlite3.Connection, recipe_id: int) -> dict:
             (recipe_id,),
         )
     ]
+    recipe["gallery"] = gallery(conn, recipe_id)
     recipe["steps"] = [
         r["text"] for r in conn.execute("SELECT text FROM recipe_steps WHERE recipe_id = ? ORDER BY position", (recipe_id,))
     ]

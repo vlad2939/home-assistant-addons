@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
-import { Download, House, Maximize, Menu, Minimize, Moon, PlusCircle, Settings, Sun, UtensilsCrossed } from "lucide-react";
+import { CalendarDays, Download, House, Maximize, Menu, Minimize, Moon, PlusCircle, Settings, ShoppingCart, Sun, UtensilsCrossed } from "lucide-react";
 import { useApp } from "../AppContext.jsx";
 import { exitFullscreen, enterFullscreen, fullscreenSupported } from "../screen.js";
 
+// main: textul se vede și pe tabletă; celelalte au text doar pe ecranele late (de la 1280 px)
 export const NAV_ITEMS = [
-  { to: "/", label: "Acasă", icon: House, end: true },
-  { to: "/retete", label: "Rețete", icon: UtensilsCrossed },
-  { to: "/adauga", label: "Adaugă", icon: PlusCircle },
-  { to: "/import", label: "Import", icon: Download },
+  { to: "/", label: "Acasă", icon: House, end: true, main: true },
+  { to: "/retete", label: "Rețete", icon: UtensilsCrossed, main: true },
+  { to: "/adauga", label: "Adaugă", icon: PlusCircle, main: true },
+  { to: "/import", label: "Import", icon: Download, main: true },
+  { to: "/meniu", label: "Meniu", icon: CalendarDays },
+  { to: "/cumparaturi", label: "Cumpărături", icon: ShoppingCart },
   { to: "/setari", label: "Setări", icon: Settings },
 ];
 
@@ -77,21 +80,21 @@ export default function TopBar({ onLogoClick, onMenuClick }) {
         Gustos
       </Link>
 
-      <nav className="ml-auto flex items-center gap-1 lg:ml-4" aria-label="Module">
-        {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+      <nav className="ml-auto flex items-center gap-0.5 lg:ml-4 lg:gap-1" aria-label="Module">
+        {NAV_ITEMS.map(({ to, label, icon: Icon, end, main }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             title={label}
             className={({ isActive }) =>
-              `flex items-center gap-2 rounded-xl px-2.5 py-2.5 text-[15px] font-medium transition-colors lg:px-3.5 ${
+              `flex items-center gap-1.5 rounded-xl px-2 py-2.5 text-[15px] font-medium transition-colors lg:gap-2 lg:px-3.5 ${
                 isActive ? "bg-accent-soft text-accent-strong" : "text-muted hover:bg-surface-2 hover:text-text"
               }`
             }
           >
             <Icon size={20} aria-hidden="true" />
-            <span className="hidden md:inline">{label}</span>
+            <span className={main ? "" : "hidden xl:inline"}>{label}</span>
           </NavLink>
         ))}
       </nav>

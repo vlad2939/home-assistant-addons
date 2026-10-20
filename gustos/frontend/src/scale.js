@@ -95,3 +95,11 @@ export function groupIngredients(ingredients) {
   }
   return groups;
 }
+
+// Produse care se cumpără la bucată: pe lista de cumpărături se rotunjesc în sus (⅓ ou → 1 ou).
+const COUNTABLE_UNITS = new Set(["bucată", "cățel", "legătură", "plic", "conservă", "felie"]);
+
+export function roundForShopping(item) {
+  if (item.quantity == null || (item.unit && !COUNTABLE_UNITS.has(item.unit))) return item;
+  return { ...item, quantity: Math.max(1, Math.ceil(item.quantity - 0.01)) };
+}

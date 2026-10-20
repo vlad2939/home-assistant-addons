@@ -7,7 +7,9 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config, db
-from .routers import backup, categories, import_sites, importer, lookups, photos, recipes, settings, tags, translate
+from .routers import (
+    backup, categories, gallery, import_sites, importer, lookups, menus, photos, recipes, settings, shopping, tags, translate,
+)
 
 
 @asynccontextmanager
@@ -24,7 +26,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-for module in (recipes, photos, importer, import_sites, categories, tags, lookups, settings, translate, backup):
+for module in (recipes, photos, gallery, importer, import_sites, categories, tags, menus, shopping, lookups, settings, translate, backup):
     app.include_router(module.router)
 
 

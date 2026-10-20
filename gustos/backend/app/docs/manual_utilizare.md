@@ -31,6 +31,7 @@ Gustos este caietul tău de rețete. Rulează pe serverul din casă (Home Assist
 
 - **Porții − / +** recalculează cantitățile. „la gust”, „un praf” sau „2-3” rămân neschimbate. **Revino la …** readuce numărul inițial de porții.
 - Atinge un **ingredient** sau un **pas** ca să-l bifezi pe măsură ce gătești. Contorul (de exemplu 3/8) arată cât ai folosit, iar **Debifează tot** le resetează. Bifele rămân cât timp tab-ul e deschis.
+- **Galerie foto**: dacă rețeta are mai multe poze, ele apar sub pași. Atinge poza principală sau o miniatură ca să le vezi pe tot ecranul; săgețile ← → sau glisarea trec la următoarea. Pozele se adaugă și se aleg la **Editează** (vezi mai jos).
 - **Video**: dacă rețeta are un clip YouTube sau Vimeo, apasă pe imaginea lui ca să pornească direct în pagină. Clipul are nevoie de internet; **Deschide pe YouTube** îl deschide într-o filă nouă.
 - Butoane:
   - **♥** – adaugă sau scoate rețeta de la favorite;
@@ -47,6 +48,43 @@ Butonul **Gătesc acum** (lângă porții) afișează rețeta pe tot ecranul, cu
 - **ecranul rămâne aprins** cât timp ești în acest mod (mesajul „Ecranul rămâne aprins” din bara de sus);
 - **Esc** sau **✕** închide modul. Dacă îl redeschizi, continui de la pasul la care ai rămas.
 
+## Meniu
+
+Din **Meniu** (bara de sus) planifici mesele.
+
+- **Meniul săptămânal**: apasă cardul **Săptămâna aceasta** sau **Săptămâna viitoare**. Pentru fiecare zi (luni–duminică) ai **Mic dejun**, **Prânz** și **Cină**. **Adaugă** deschide căutarea în rețete; la o masă pot fi mai multe rețete (de exemplu ciorbă și fel principal).
+- **Evenimentul** (Crăciun, Paște, o zi de naștere): **Eveniment nou** → numele, data și câte persoane. Rețetele se pun pe feluri: aperitive, supe și ciorbe, fel principal, garnituri și salate, desert, băuturi.
+- **Câte persoane**: rețetele adăugate primesc atâtea porții. Poți schimba porțiile fiecărei rețete cu − / +, iar **Aplică la toate rețetele** le aduce pe toate la numărul de persoane.
+- Apasă **Salvează meniul**. Meniul se vede pe zile, iar ziua de azi e evidențiată.
+- La un meniu salvat: **Editează**, **Șterge** sau, la săptămâni, **Copiază în săptămâna următoare**.
+- Dacă ștergi o rețetă, ea dispare și din meniuri.
+
+## Cumpărături
+
+O singură listă, aceeași pe toate dispozitivele (o completezi pe PC, o bifezi pe telefon în magazin).
+
+- **Din rețetă**: pe pagina rețetei alegi porțiile, apoi **Adaugă în cumpărături**.
+- **Din meniu**: pe pagina meniului, **Listă de cumpărături** adaugă ingredientele tuturor rețetelor, cu porțiile din meniu.
+- **De mână**: scrie în câmpul de sus, de exemplu „2 kg cartofi” sau „detergent”, și apasă **Adaugă**.
+- Ingredientele identice se adună (500 g + 0,5 kg făină = 1 kg). Produsele sunt grupate pe raioane: legume și fructe, carne și pește, lactate și ouă, panificație, băcănie, condimente, altele. Sub fiecare produs scrie din ce rețete vine.
+- Produsele care se cumpără la bucată se rotunjesc în sus (din porții poate ieși „⅓ ou”, dar pe listă apare „1 ou”).
+- Atinge un produs ca să-l bifezi: trece la **În coș**. **Scoate din listă ce e bifat** curăță lista după cumpărături, iar **Golește lista** le șterge pe toate. ✕ scoate un singur produs.
+- Lista se actualizează singură la câteva secunde, dacă altcineva o modifică de pe alt dispozitiv.
+
+## PDF și tipărire
+
+Butonul **PDF** există pe pagina rețetei, pe pagina unui meniu și în **Cumpărături**.
+
+1. Se deschide o pagină curată, albă, în format A4, apoi fereastra de tipărire a browserului.
+2. La **Destinație** alege **Salvează ca PDF** (sau imprimanta) și apasă **Salvează**. Fișierul primește numele rețetei sau al meniului.
+3. **Înapoi** te întoarce în aplicație; **Salvează PDF / Tipărește** redeschide fereastra.
+
+Bine de știut:
+
+- Rețeta se tipărește cu porțiile alese pe pagină: dacă ai pus 8 porții, cantitățile sunt pentru 8.
+- La lista de cumpărături se tipăresc doar produsele nebifate, pe raioane, cu căsuțe de bifat pe hârtie.
+- Pe tabletă: meniul ⋮ al Chrome → **Distribuie** / **Tipărește** dacă fereastra nu apare singură.
+
 ## Adăugarea și editarea unei rețete
 
 1. Apasă **Adaugă**, sau **Editează** pe pagina unei rețete.
@@ -58,9 +96,10 @@ Butonul **Gătesc acum** (lângă porții) afișează rețeta pe tot ecranul, cu
    - **Adaugă grup** creează o secțiune separată, de exemplu „Pentru sos”.
    - Săgețile ↑ ↓ mută rândurile.
 5. **Pașii** se mută tot cu săgeți. Dacă lipești toți pașii odată într-un câmp gol, fiecare rând devine un pas.
-6. **Rețeta mea** (sus, lângă „Informații”): apasă-l dacă rețeta este a ta, nu preluată de pe un site. Rețeta primește eticheta „Rețeta mea” și apare în **Rețetele mele**, în panoul din stânga.
-7. **Video (link)**: lipește linkul clipului de pe YouTube (sau Vimeo). Orice formă de link merge, inclusiv cel de la butonul „Distribuie” din aplicația YouTube.
-8. Apasă **Salvează rețeta**. Dacă încerci să pleci de pe pagină fără să salvezi, aplicația te avertizează.
+6. **Galerie foto** (doar la editarea unei rețete salvate): **Adaugă poze** (mai multe odată) sau **Fă o poză**, până la 30. ★ pe o miniatură o face poza principală (cea de acum trece în galerie), ✕ o șterge. Pozele din galerie se salvează imediat.
+7. **Rețeta mea** (sus, lângă „Informații”): apasă-l dacă rețeta este a ta, nu preluată de pe un site. Rețeta primește eticheta „Rețeta mea” și apare în **Rețetele mele**, în panoul din stânga.
+8. **Video (link)**: lipește linkul clipului de pe YouTube (sau Vimeo). Orice formă de link merge, inclusiv cel de la butonul „Distribuie” din aplicația YouTube.
+9. Apasă **Salvează rețeta**. Dacă încerci să pleci de pe pagină fără să salvezi, aplicația te avertizează.
 
 ## Importul dintr-un link
 

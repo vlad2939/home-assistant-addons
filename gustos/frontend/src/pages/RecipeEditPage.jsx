@@ -7,6 +7,8 @@ import { emptyForm, formSignature, toForm, toPayload } from "../recipeForm.js";
 import PageHeader from "../components/PageHeader.jsx";
 import TranslatePanel from "../components/form/TranslatePanel.jsx";
 import RecipeForm from "../components/form/RecipeForm.jsx";
+import RecipeGallery from "../components/RecipeGallery.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import UnsavedChangesGuard from "../components/form/UnsavedChangesGuard.jsx";
 
 /** Salvează rețeta și poza. Returnează { id, photoError }; poza greșită nu pierde rețeta. */
@@ -30,6 +32,8 @@ export default function RecipeEditPage() {
   const [form, setForm] = useState(() => (id ? null : emptyForm()));
   const [initialSignature, setInitialSignature] = useState(() => (id ? null : formSignature(emptyForm())));
   const [currentPhoto, setCurrentPhoto] = useState(null);
+  const [gallery, setGallery] = useState([]);
+  const [photoToDelete, setPhotoToDelete] = useState(null);
   const [photo, setPhoto] = useState({ mode: "keep" });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -46,9 +50,17 @@ export default function RecipeEditPage() {
         setForm(f);
         setInitialSignature(formSignature(f));
         setCurrentPhoto(recipe.photo);
+        setGallery(recipe.gallery);
       })
       .catch((e) => setLoadError(e.message));
   }, [id]);
+
+  const makeCover = async (image) => {
+    const result = await api.post(`/api/recipes/${id}/gallery/${image.id}/cover`);
+    setCurrentPhoto(result.photo);
+    setGallery(result.gallery);
+    setPhoto({ mode: "keep" });
+  };
 
   const dirty = Boolean(form) && !saved && (photo.mode !== "keep" || formSignature(form) !== initialSignature);
 
@@ -90,7 +102,43 @@ export default function RecipeEditPage() {
 
       <TranslatePanel form={form} setForm={setForm} />
 
-      <RecipeForm form={form} setForm={setForm} photo={photo} setPhoto={setPhoto} currentPhoto={currentPhoto} errors={errors} />
+      <RecipeForm
+        form={form}
+        setForm={setForm}
+        photo={photo}
+        setPhoto={setPhoto}
+        currentPhoto={currentPhoto}
+        errors={errors}
+        afterPhoto={
+          id ? (
+            <RecipeGallery
+              recipe={{ id, photo: null, gallery }}
+              onGallery={setGallery}
+              onDelete={setPhotoToDelete}
+              onMakeCover={makeCover}
+              note="Pozele din galerie se salvează imediat, fără butonul „Salvează rețeta”. ★ face poza respectivă poza principală (cea de acum trece în galerie)."
+            />
+          ) : (
+            <p className="rounded-3xl border border-dashed border-border px-5 py-4 text-sm text-muted">
+              Poți adăuga mai multe poze în galeria rețetei după ce o salvezi (din pagina rețetei sau de la Editează).
+            </p>
+          )
+        }
+      />
+      <ConfirmDialog
+        open={Boolean(photoToDelete)}
+        onClose={() => setPhotoToDelete(null)}
+        onConfirm={async () => {
+          await api.del(`/api/recipes/${id}/gallery/${photoToDelete.id}`);
+          setGallery((g) => g.filter((x) => x.id !== photoToDelete.id));
+          setPhotoToDelete(null);
+        }}
+        title="Ștergi poza din galerie?"
+        confirmLabel="Șterge poza"
+        danger
+      >
+        <p>Poza va fi ștearsă definitiv.</p>
+      </ConfirmDialog>
 
       <div className="sticky bottom-0 z-10 -mx-5 mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-border bg-bg/90 px-5 py-4 backdrop-blur lg:-mx-8 lg:px-8">
         {message && (

@@ -3,7 +3,7 @@
 Conținutul ZIP-ului:
     manifest.json        aplicația, versiunea, versiunea schemei, data, numărul de rețete
     gustos.db            copie consistentă a bazei de date (API-ul de backup SQLite)
-    photos/<nume>.webp   pozele
+    photos/<nume>.webp   pozele (principale și din galerii)
 
 Restaurarea verifică ZIP-ul înainte de orice modificare și salvează automat starea curentă în
 <data>/backups/ (se păstrează ultimele 5).
@@ -58,7 +58,13 @@ def create_backup(target: Path) -> dict:
         recipe_count = _snapshot(db_copy)
         conn = sqlite3.connect(db_copy)
         schema = conn.execute("PRAGMA user_version").fetchone()[0]
-        used = {r[0] for r in conn.execute("SELECT photo FROM recipes WHERE photo IS NOT NULL")}
+        used = {
+            r[0]
+            for r in conn.execute(
+                "SELECT photo FROM recipes WHERE photo IS NOT NULL"
+                + (" UNION SELECT photo FROM recipe_photos" if schema >= 4 else "")
+            )
+        }
         conn.close()
         manifest = {
             "app": "Gustos",

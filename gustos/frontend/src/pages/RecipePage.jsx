@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, ChefHat, ExternalLink, Gauge, Lightbulb, Minus, NotebookPen, Pencil, Plus, RotateCcw, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Check, ChefHat, ExternalLink, FileText, ShoppingCart, Gauge, Lightbulb, Minus, NotebookPen, Pencil, Plus, RotateCcw, Trash2, Users } from "lucide-react";
 import { api } from "../api.js";
 import { useApp } from "../AppContext.jsx";
 import { formatMinutes } from "../format.js";
@@ -10,6 +10,8 @@ import FavoriteButton from "../components/FavoriteButton.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import RecipeVideo from "../components/RecipeVideo.jsx";
+import RecipeGallery from "../components/RecipeGallery.jsx";
+import PhotoLightbox from "../components/PhotoLightbox.jsx";
 import CookMode from "../components/CookMode.jsx";
 import { useChecked } from "../useChecked.js";
 
@@ -189,6 +191,8 @@ export default function RecipePage() {
   const [servings, setServings] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [cooking, setCooking] = useState(false);
+  const [viewer, setViewer] = useState(null); // indexul pozei deschise pe tot ecranul
+  const [shopping, setShopping] = useState(null); // mesajul după „Adaugă în cumpărături”
   const ingredientChecks = useChecked(`gustos-ingredients-${id}`);
   const stepChecks = useChecked(`gustos-steps-${id}`);
 
@@ -196,6 +200,8 @@ export default function RecipePage() {
     let cancelled = false;
     setRecipe(null);
     setCooking(false);
+    setViewer(null);
+    setShopping(null);
     setError(null);
     api
       .get(`/api/recipes/${id}`)
@@ -232,6 +238,22 @@ export default function RecipePage() {
 
   const tagLink = (t) => `/retete?tag=${encodeURIComponent(t)}`;
 
+  const addToShopping = async () => {
+    try {
+      const r = await api.post("/api/shopping/from-recipe", { recipe_id: recipe.id, servings });
+      const forServings = servings ? ` pentru ${servings} ${servings === 1 ? "porție" : "porții"}` : "";
+      setShopping(`Am adăugat ${r.added} ${r.added === 1 ? "ingredient" : "ingrediente"}${forServings} în lista de cumpărături.`);
+    } catch (e) {
+      setShopping(e.message);
+    }
+  };
+
+  const images = [
+    ...(recipe.photo ? [{ photo: recipe.photo }] : []),
+    ...recipe.gallery.map((g) => ({ photo: g.photo, galleryId: g.id })),
+  ];
+
+
   return (
     <article>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -245,6 +267,13 @@ export default function RecipePage() {
             onChange={(favorite) => setRecipe((r) => ({ ...r, favorite }))}
             className="border border-border bg-surface hover:bg-surface-2"
           />
+          <Link
+            to={`/tipar/reteta/${recipe.id}${servings ? `?portii=${servings}` : ""}`}
+            className="flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium hover:bg-surface-2"
+            title="Rețeta ca PDF sau la imprimantă, cu porțiile alese"
+          >
+            <FileText size={18} aria-hidden="true" /> PDF
+          </Link>
           <Link
             to={`/editeaza/${recipe.id}`}
             className="flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium hover:bg-surface-2"
@@ -268,7 +297,9 @@ export default function RecipePage() {
       )}
 
       {recipe.photo && (
-        <RecipePhoto recipe={recipe} thumb={false} className="mb-6 aspect-[16/9] max-h-[460px] w-full rounded-3xl" />
+        <button type="button" onClick={() => setViewer(0)} className="mb-6 block w-full" aria-label="Deschide pozele pe tot ecranul">
+          <RecipePhoto recipe={recipe} thumb={false} className="aspect-[16/9] max-h-[460px] w-full rounded-3xl" />
+        </button>
       )}
 
       <header className="mb-6">
@@ -314,6 +345,16 @@ export default function RecipePage() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-surface p-4 shadow-card">
         <ServingsControl base={recipe.servings} servings={servings} setServings={setServings} />
+        <span className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={addToShopping}
+          disabled={!recipe.ingredients.length}
+          className="flex h-12 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium hover:bg-surface-2 disabled:opacity-50"
+          title="Adaugă ingredientele, pentru porțiile alese, în lista de cumpărături"
+        >
+          <ShoppingCart size={20} aria-hidden="true" /> Adaugă în cumpărături
+        </button>
         <button
           type="button"
           onClick={() => setCooking(true)}
@@ -322,7 +363,16 @@ export default function RecipePage() {
         >
           <ChefHat size={22} aria-hidden="true" /> Gătesc acum
         </button>
+        </span>
       </div>
+      {shopping && (
+        <p className="-mt-3 mb-6 rounded-2xl border border-border bg-surface px-4 py-3" role="status">
+          {shopping}{" "}
+          <Link to="/cumparaturi" className="font-medium text-accent hover:underline">
+            Vezi lista
+          </Link>
+        </p>
+      )}
 
       <div className="mb-6 grid gap-6 md:grid-cols-5">
         <div className="md:col-span-2">
@@ -332,6 +382,12 @@ export default function RecipePage() {
           <Steps recipe={recipe} state={stepChecks} />
         </div>
       </div>
+
+      {recipe.gallery.length > 0 && (
+        <div className="mb-6">
+          <RecipeGallery recipe={recipe} onOpen={setViewer} />
+        </div>
+      )}
 
       {recipe.video_url && (
         <div className="mb-6">
@@ -351,6 +407,15 @@ export default function RecipePage() {
             {recipe.source_site} <ExternalLink size={14} aria-hidden="true" />
           </a>
         </p>
+      )}
+
+      {viewer !== null && images.length > 0 && (
+        <PhotoLightbox
+          images={images}
+          index={Math.min(viewer, images.length - 1)}
+          onIndex={setViewer}
+          onClose={() => setViewer(null)}
+        />
       )}
 
       {cooking && (
