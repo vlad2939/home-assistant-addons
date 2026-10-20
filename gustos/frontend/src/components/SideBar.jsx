@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Heart, LayoutGrid } from "lucide-react";
+import { BadgeCheck, Heart, LayoutGrid } from "lucide-react";
 import { useApp } from "../AppContext.jsx";
 
 function Item({ to, active, icon: Icon, label, count, onNavigate }) {
@@ -26,6 +26,7 @@ export default function SideBar({ onNavigate }) {
   const onList = pathname === "/retete";
   const activeCategory = onList ? params.get("categorie") : null;
   const favorites = onList && params.get("favorite") === "1";
+  const mine = onList && params.get("ale-mele") === "1";
 
   return (
     <nav className="flex flex-col gap-1 p-3" aria-label="Categorii">
@@ -35,7 +36,7 @@ export default function SideBar({ onNavigate }) {
         label="Toate"
         icon={LayoutGrid}
         count={stats?.recipes}
-        active={onList && !activeCategory && !favorites}
+        active={onList && !activeCategory && !favorites && !mine}
         onNavigate={onNavigate}
       />
       <Item
@@ -44,6 +45,14 @@ export default function SideBar({ onNavigate }) {
         icon={Heart}
         count={stats?.favorites}
         active={favorites}
+        onNavigate={onNavigate}
+      />
+      <Item
+        to="/retete?ale-mele=1"
+        label="Rețetele mele"
+        icon={BadgeCheck}
+        count={stats?.own}
+        active={mine}
         onNavigate={onNavigate}
       />
       <hr className="mx-3 my-2 border-border" />

@@ -23,6 +23,7 @@ export function emptyForm() {
     notes: "",
     source_url: "",
     video_url: "",
+    own: false,
   };
 }
 
@@ -59,6 +60,7 @@ export function toForm(recipe) {
     notes: str(recipe.notes),
     source_url: str(recipe.source_url),
     video_url: str(recipe.video_url),
+    own: Boolean(recipe.own),
   };
 }
 
@@ -122,6 +124,7 @@ export function toPayload(form) {
     notes: form.notes.trim() || null,
     source_url: source || null,
     video_url: video || null,
+    own: Boolean(form.own),
   };
   return { payload, errors };
 }

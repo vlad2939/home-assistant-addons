@@ -58,8 +58,9 @@ Butonul **Gătesc acum** (lângă porții) afișează rețeta pe tot ecranul, cu
    - **Adaugă grup** creează o secțiune separată, de exemplu „Pentru sos”.
    - Săgețile ↑ ↓ mută rândurile.
 5. **Pașii** se mută tot cu săgeți. Dacă lipești toți pașii odată într-un câmp gol, fiecare rând devine un pas.
-6. **Video (link)**: lipește linkul clipului de pe YouTube (sau Vimeo). Orice formă de link merge, inclusiv cel de la butonul „Distribuie” din aplicația YouTube.
-7. Apasă **Salvează rețeta**. Dacă încerci să pleci de pe pagină fără să salvezi, aplicația te avertizează.
+6. **Rețeta mea** (sus, lângă „Informații”): apasă-l dacă rețeta este a ta, nu preluată de pe un site. Rețeta primește eticheta „Rețeta mea” și apare în **Rețetele mele**, în panoul din stânga.
+7. **Video (link)**: lipește linkul clipului de pe YouTube (sau Vimeo). Orice formă de link merge, inclusiv cel de la butonul „Distribuie” din aplicația YouTube.
+8. Apasă **Salvează rețeta**. Dacă încerci să pleci de pe pagină fără să salvezi, aplicația te avertizează.
 
 ## Importul dintr-un link
 

@@ -1,5 +1,12 @@
 # Istoric versiuni
 
+## 1.2.0 – 20.10.2026
+
+- **Rețeta mea**: buton nou în formularul Adaugă / Editează care marchează rețeta ca fiind a ta. Rețetele marcate au eticheta „Rețeta mea” pe card și pe pagina rețetei, iar în panoul din stânga apare „Rețetele mele”, cu numărul lor. Pe Acasă, secțiunea „Rețetele mele” apare deasupra celor adăugate recent.
+- Setări → Tag-uri: lista ocupă toată înălțimea cardului (cât cel cu categorii), apoi apare bara de derulare.
+- Corectură: lista de surse din pagina Rețete nu mai schimbă culorile opțiunilor când e aleasă o sursă.
+- Baza de date trece la versiunea 3 (coloana `own`), automat la pornire.
+
 ## 1.1.0 – 20.10.2026
 
 - **Video la rețete**: câmp nou „Video (link)” în formular. La import, clipul YouTube / Vimeo al paginii se preia automat. Pe pagina rețetei, clipul pornește direct în pagină (YouTube fără cookie-uri), cu link și spre site-ul clipului.

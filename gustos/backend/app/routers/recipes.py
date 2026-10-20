@@ -19,10 +19,11 @@ def search(
     source: str | None = None,
     favorite: bool | None = None,
     video: bool | None = None,
+    own: bool | None = None,
     sort: str | None = None,
     conn: sqlite3.Connection = Depends(db.get_conn),
 ):
-    items = list_recipes(conn, Filters(q, category, ingredient, tags, source, favorite, sort, video))
+    items = list_recipes(conn, Filters(q, category, ingredient, tags, source, favorite, sort, video, own))
     return {"total": len(items), "items": items}
 
 

@@ -48,6 +48,7 @@ def stats(conn: sqlite3.Connection = Depends(db.get_conn)):
     return {
         "recipes": one("SELECT COUNT(*) FROM recipes"),
         "favorites": one("SELECT COUNT(*) FROM recipes WHERE favorite = 1"),
+        "own": one("SELECT COUNT(*) FROM recipes WHERE own = 1"),
         "videos": one("SELECT COUNT(*) FROM recipes WHERE video_url IS NOT NULL"),
         "uncategorized": one("SELECT COUNT(*) FROM recipes WHERE category_id IS NULL"),
         "categories": one("SELECT COUNT(*) FROM categories"),

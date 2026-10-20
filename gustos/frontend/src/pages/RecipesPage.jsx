@@ -18,7 +18,7 @@ const SORTS = [
   { id: "time", label: "Timp total" },
 ];
 
-// Filtrele stau în adresa paginii (?q=…&categorie=…&ingredient=…&tag=…&sursa=…&favorite=1&video=1&sortare=…),
+// Filtrele stau în adresa paginii (?q=…&categorie=…&ingredient=…&tag=…&sursa=…&favorite=1&video=1&ale-mele=1&sortare=…),
 // deci se păstrează la „Înapoi” și se pot salva ca semn de carte.
 function Chip({ children, onRemove }) {
   return (
@@ -48,6 +48,7 @@ export default function RecipesPage() {
   const source = params.get("sursa");
   const favorite = params.get("favorite") === "1";
   const withVideo = params.get("video") === "1";
+  const mine = params.get("ale-mele") === "1";
   const sort = params.get("sortare");
   const category = categories.find((c) => String(c.id) === categoryId);
 
@@ -78,6 +79,7 @@ export default function RecipesPage() {
     if (source) p.set("source", source);
     if (favorite) p.set("favorite", "true");
     if (withVideo) p.set("video", "true");
+    if (mine) p.set("own", "true");
     if (sort) p.set("sort", sort);
     return p.toString();
   }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -107,10 +109,19 @@ export default function RecipesPage() {
   const hasFilters = Boolean(params.get("q") || ingredients.length || selectedTags.length || source || favorite || withVideo);
   const resetFilters = () => {
     setText("");
-    setParams(categoryId ? { categorie: categoryId } : {});
+    // categoria și „Rețetele mele” (alese din stânga) rămân
+    setParams({ ...(categoryId && { categorie: categoryId }), ...(mine && { "ale-mele": "1" }) });
   };
 
-  const title = category ? category.name : favorite ? "Favorite" : withVideo ? "Rețete cu video" : "Toate rețetele";
+  const title = category
+    ? category.name
+    : mine
+      ? "Rețetele mele"
+      : favorite
+        ? "Favorite"
+        : withVideo
+          ? "Rețete cu video"
+          : "Toate rețetele";
 
   const sortOptions = SORTS.filter((s) => !s.needsQuery || params.get("q"));
   const activeSort = sort && sortOptions.some((s) => s.id === sort) ? sort : params.get("q") ? "relevance" : "recent";

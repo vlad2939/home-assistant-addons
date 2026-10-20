@@ -44,6 +44,7 @@ class RecipeIn(BaseModel):
     notes: Text = Field(default=None, max_length=10000)
     source_url: Text = Field(default=None, max_length=2000)
     video_url: Text = Field(default=None, max_length=500)
+    own: bool = False
     source_site: Text = Field(default=None, max_length=200)
     original_language: Text = Field(default=None, max_length=10)
     calories_per_serving: float | None = Field(default=None, ge=0, le=100000)

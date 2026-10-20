@@ -71,11 +71,13 @@ export default function HomePage() {
   const { stats } = useApp();
   const [recent, setRecent] = useState(null);
   const [favorites, setFavorites] = useState([]);
+  const [mine, setMine] = useState([]);
   const [suggestion, setSuggestion] = useState(null);
 
   const load = useCallback(() => {
     api.get("/api/recipes?sort=recent").then((r) => setRecent(r.items.slice(0, PREVIEW))).catch(() => setRecent([]));
     api.get("/api/recipes?favorite=true&sort=updated").then((r) => setFavorites(r.items.slice(0, PREVIEW))).catch(() => {});
+    api.get("/api/recipes?own=true&sort=recent").then((r) => setMine(r.items.slice(0, PREVIEW))).catch(() => {});
   }, []);
 
   const suggest = useCallback(() => {
@@ -116,6 +118,12 @@ export default function HomePage() {
       </div>
 
       {suggestion && <TodaySuggestion recipe={suggestion} onAnother={suggest} />}
+
+      {mine.length > 0 && (
+        <Section title="Rețetele mele" to="/retete?ale-mele=1">
+          <RecipeGrid recipes={mine} onFavoriteChange={onFavoriteChange} />
+        </Section>
+      )}
 
       {recent && (
         <Section title="Adăugate recent" to="/retete?sortare=recent">

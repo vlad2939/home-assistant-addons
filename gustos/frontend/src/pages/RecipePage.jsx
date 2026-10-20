@@ -5,7 +5,7 @@ import { api } from "../api.js";
 import { useApp } from "../AppContext.jsx";
 import { formatMinutes } from "../format.js";
 import { groupIngredients, ingredientAmount } from "../scale.js";
-import { RecipePhoto } from "../components/RecipeCard.jsx";
+import { OwnBadge, RecipePhoto } from "../components/RecipeCard.jsx";
 import FavoriteButton from "../components/FavoriteButton.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import PageHeader from "../components/PageHeader.jsx";
@@ -272,11 +272,18 @@ export default function RecipePage() {
       )}
 
       <header className="mb-6">
-        {recipe.category_name && (
-          <Link to={`/retete?categorie=${recipe.category_id}`} className="font-semibold text-accent hover:underline">
-            {recipe.category_name}
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {recipe.category_name && (
+            <Link to={`/retete?categorie=${recipe.category_id}`} className="font-semibold text-accent hover:underline">
+              {recipe.category_name}
+            </Link>
+          )}
+          {recipe.own && (
+            <Link to="/retete?ale-mele=1" className="hover:opacity-90">
+              <OwnBadge />
+            </Link>
+          )}
+        </div>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight lg:text-4xl">{recipe.title}</h1>
         {recipe.description && <p className="mt-3 max-w-3xl text-lg leading-relaxed text-muted">{recipe.description}</p>}
         {recipe.tags.length > 0 && (

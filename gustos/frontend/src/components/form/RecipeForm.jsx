@@ -1,3 +1,4 @@
+import { BadgeCheck } from "lucide-react";
 import { useApp } from "../../AppContext.jsx";
 import { Field, FormSection, Select, TextArea, TextInput } from "./fields.jsx";
 import IngredientsEditor from "./IngredientsEditor.jsx";
@@ -26,7 +27,22 @@ export default function RecipeForm({ form, setForm, photo, setPhoto, currentPhot
     <div className="space-y-6">
       <PhotoPicker currentPhoto={currentPhoto} value={photo} onChange={setPhoto} />
 
-      <FormSection title="Informații">
+      <FormSection
+        title="Informații"
+        action={
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, own: !f.own }))}
+            aria-pressed={form.own}
+            title="Marchează rețeta ca fiind rețeta ta (nu preluată de pe un site)"
+            className={`flex h-11 items-center gap-2 rounded-2xl border-2 px-4 font-medium transition-colors ${
+              form.own ? "border-accent bg-accent-soft text-accent-strong" : "border-border hover:bg-surface-2"
+            }`}
+          >
+            <BadgeCheck size={20} aria-hidden="true" /> Rețeta mea
+          </button>
+        }
+      >
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Titlu *" error={errors.title} className="md:col-span-2" htmlFor="f-title">
             <TextInput

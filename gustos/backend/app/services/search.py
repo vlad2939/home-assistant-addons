@@ -31,6 +31,7 @@ class Filters:
     favorite: bool | None = None
     sort: str | None = None
     video: bool | None = None
+    own: bool | None = None
 
 
 def fts_query(text: str | None) -> str | None:
@@ -72,6 +73,9 @@ def list_recipes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
     if f.favorite is not None:
         where.append("r.favorite = ?")
         params.append(int(f.favorite))
+    if f.own is not None:
+        where.append("r.own = ?")
+        params.append(int(f.own))
     if f.video is not None:
         where.append("r.video_url IS NOT NULL" if f.video else "r.video_url IS NULL")
 
@@ -82,7 +86,7 @@ def list_recipes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
 
     sql = f"""
         SELECT r.id, r.title, r.description, r.photo, r.prep_time, r.cook_time, r.servings,
-               r.favorite, r.category_id, c.name AS category_name, r.source_site,
+               r.favorite, r.own, r.category_id, c.name AS category_name, r.source_site,
                r.created_at, r.updated_at
         FROM recipes r {joins}
         LEFT JOIN categories c ON c.id = r.category_id
@@ -93,6 +97,7 @@ def list_recipes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
     tags = _tags_for(conn, [i["id"] for i in items])
     for item in items:
         item["favorite"] = bool(item["favorite"])
+        item["own"] = bool(item["own"])
         item["total_time"] = total_time(item["prep_time"], item["cook_time"])
         item["tags"] = tags.get(item["id"], [])
     return items

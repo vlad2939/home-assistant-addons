@@ -13,7 +13,7 @@ _NOW = "strftime('%Y-%m-%dT%H:%M:%S', 'now')"
 
 _RECIPE_FIELDS = [
     "title", "description", "servings", "prep_time", "cook_time", "difficulty", "category_id",
-    "tips", "notes", "source_url", "video_url", "source_site", "original_language", "calories_per_serving",
+    "tips", "notes", "source_url", "video_url", "own", "source_site", "original_language", "calories_per_serving",
 ]
 
 
@@ -29,6 +29,7 @@ def _values(conn: sqlite3.Connection, data: RecipeIn) -> dict:
         if not conn.execute("SELECT 1 FROM categories WHERE id = ?", (data.category_id,)).fetchone():
             raise HTTPException(422, "Categoria aleasă nu există.")
     values = {f: getattr(data, f) for f in _RECIPE_FIELDS}
+    values["own"] = int(data.own)
     if not values["source_site"]:
         values["source_site"] = site_from_url(data.source_url)
     return values
@@ -134,6 +135,7 @@ def get_recipe(conn: sqlite3.Connection, recipe_id: int) -> dict:
     row = _require(conn, recipe_id)
     recipe = dict(row)
     recipe["favorite"] = bool(recipe["favorite"])
+    recipe["own"] = bool(recipe["own"])
     recipe["total_time"] = total_time(row["prep_time"], row["cook_time"])
     category = conn.execute("SELECT name FROM categories WHERE id = ?", (row["category_id"],)).fetchone()
     recipe["category_name"] = category["name"] if category else None

@@ -99,6 +99,13 @@
   ::selection {
     background: var(--accent-soft);
   }
+
+  /* Opțiunile listelor (select) au mereu culorile temei, chiar dacă lista e evidențiată
+     (altfel Chrome pe Windows le moștenește culoarea de accent pe fundal deschis). */
+  option {
+    background-color: var(--surface);
+    color: var(--text);
+  }
 }
 
 @keyframes fade-in {

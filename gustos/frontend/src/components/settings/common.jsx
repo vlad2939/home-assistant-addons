@@ -1,11 +1,11 @@
 // Piese comune pentru secțiunile din Setări.
 
-export function Section({ title, description, children, className = "" }) {
+export function Section({ title, description, children, className = "", bodyClassName = "" }) {
   return (
     <section className={`rounded-3xl border border-border bg-surface p-5 shadow-card lg:p-6 ${className}`}>
       <h2 className="text-lg font-semibold">{title}</h2>
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
-      <div className="mt-4">{children}</div>
+      <div className={`mt-4 ${bodyClassName}`}>{children}</div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChefHat, Clock } from "lucide-react";
+import { BadgeCheck, ChefHat, Clock } from "lucide-react";
 import { formatMinutes, photoUrl } from "../format.js";
 import FavoriteButton from "./FavoriteButton.jsx";
 
@@ -19,6 +19,15 @@ export function RecipePhoto({ recipe, thumb = true, className = "" }) {
   );
 }
 
+/** Eticheta „Rețeta mea” pentru rețetele proprii. */
+export function OwnBadge({ className = "" }) {
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-on-accent ${className}`}>
+      <BadgeCheck size={14} aria-hidden="true" /> Rețeta mea
+    </span>
+  );
+}
+
 export default function RecipeCard({ recipe, onFavoriteChange }) {
   const time = formatMinutes(recipe.total_time);
   return (
@@ -28,6 +37,7 @@ export default function RecipeCard({ recipe, onFavoriteChange }) {
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         <RecipePhoto recipe={recipe} className="h-full w-full transition-transform duration-300 group-hover:scale-[1.03]" />
+        {recipe.own && <OwnBadge className="absolute left-2 top-2 shadow-card" />}
         <FavoriteButton
           recipeId={recipe.id}
           favorite={recipe.favorite}

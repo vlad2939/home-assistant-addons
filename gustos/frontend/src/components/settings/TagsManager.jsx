@@ -109,6 +109,8 @@ export default function TagsManager() {
 
   return (
     <Section
+      className="flex flex-col"
+      bodyClassName="flex min-h-0 flex-1 flex-col"
       title="Tag-uri"
       description="Tag-urile noi se adaugă din formularul rețetei; aici le redenumești sau le ștergi. Dacă redenumești un tag cu numele altuia existent, cele două se unesc."
     >
@@ -119,11 +121,14 @@ export default function TagsManager() {
           <TextInput value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Caută un tag" aria-label="Caută un tag" className="pl-10" />
         </div>
       )}
-      <ul className="max-h-[26rem] divide-y divide-border overflow-y-auto pr-1">
-        {shown.map((t) => (
-          <Row key={`${t.id}-${t.name}`} tag={t} onRename={rename} onDelete={setToDelete} />
-        ))}
-      </ul>
+      {/* Pe două coloane lista ocupă tot cardul (cât cel cu categorii), apoi apare bara de derulare. */}
+      <div className="xl:relative xl:min-h-72 xl:flex-1">
+        <ul className="max-h-[26rem] divide-y divide-border overflow-y-auto pr-1 xl:absolute xl:inset-0 xl:max-h-none">
+          {shown.map((t) => (
+            <Row key={`${t.id}-${t.name}`} tag={t} onRename={rename} onDelete={setToDelete} />
+          ))}
+        </ul>
+      </div>
       {tags && tags.length > 0 && shown.length === 0 && <p className="py-2 text-muted">Niciun tag nu se potrivește.</p>}
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
 
