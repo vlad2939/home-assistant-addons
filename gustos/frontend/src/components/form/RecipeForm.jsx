@@ -74,7 +74,7 @@ export default function RecipeForm({ form, setForm, photo, setPhoto, currentPhot
 
       <StepsEditor steps={form.steps} onChange={(steps) => setForm((f) => ({ ...f, steps }))} />
 
-      <FormSection title="Sfaturi, note și sursă">
+      <FormSection title="Sfaturi, note, sursă și video">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Sfaturi utile" htmlFor="f-tips">
             <TextArea id="f-tips" value={form.tips} onChange={set("tips")} rows={4} />
@@ -91,6 +91,23 @@ export default function RecipeForm({ form, setForm, photo, setPhoto, currentPhot
               onChange={set("source_url")}
               placeholder="https://…"
               invalid={Boolean(errors.source_url)}
+            />
+          </Field>
+          <Field
+            label="Video (link)"
+            error={errors.video_url}
+            className="md:col-span-2"
+            htmlFor="f-video"
+            hint="Clipurile YouTube și Vimeo se pot reda direct din pagina rețetei."
+          >
+            <TextInput
+              id="f-video"
+              type="url"
+              inputMode="url"
+              value={form.video_url}
+              onChange={set("video_url")}
+              placeholder="https://www.youtube.com/watch?v=…"
+              invalid={Boolean(errors.video_url)}
             />
           </Field>
         </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, ExternalLink, Gauge, Lightbulb, Minus, NotebookPen, Pencil, Plus, RotateCcw, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Check, ChefHat, ExternalLink, Gauge, Lightbulb, Minus, NotebookPen, Pencil, Plus, RotateCcw, Trash2, Users } from "lucide-react";
 import { api } from "../api.js";
 import { useApp } from "../AppContext.jsx";
 import { formatMinutes } from "../format.js";
@@ -9,35 +9,11 @@ import { RecipePhoto } from "../components/RecipeCard.jsx";
 import FavoriteButton from "../components/FavoriteButton.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import PageHeader from "../components/PageHeader.jsx";
+import RecipeVideo from "../components/RecipeVideo.jsx";
+import CookMode from "../components/CookMode.jsx";
+import { useChecked } from "../useChecked.js";
 
 const MAX_SERVINGS = 100;
-
-// Ingredientele și pașii bifați se păstrează cât timp tab-ul e deschis (sessionStorage),
-// ca să nu se piardă la navigare.
-function useChecked(key) {
-  const [checked, setChecked] = useState(() => {
-    try {
-      return new Set(JSON.parse(sessionStorage.getItem(key)) || []);
-    } catch {
-      return new Set();
-    }
-  });
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(key, JSON.stringify([...checked]));
-    } catch {
-      // fără stocare: bifele rămân doar pe pagina curentă
-    }
-  }, [key, checked]);
-  const toggle = (i) =>
-    setChecked((s) => {
-      const next = new Set(s);
-      if (next.has(i)) next.delete(i);
-      else next.add(i);
-      return next;
-    });
-  return [checked, toggle, () => setChecked(new Set())];
-}
 
 function Meta({ label, value }) {
   if (!value) return null;
@@ -81,9 +57,9 @@ function ServingsControl({ base, servings, setServings }) {
   );
 }
 
-function Ingredients({ recipe, servings }) {
+function Ingredients({ recipe, servings, state }) {
   const groups = groupIngredients(recipe.ingredients);
-  const [checked, toggle, reset] = useChecked(`gustos-ingredients-${recipe.id}`);
+  const { checked, toggle, reset } = state;
   const total = recipe.ingredients.length;
   return (
     <section className="rounded-3xl border border-border bg-surface p-6 shadow-card">
@@ -150,8 +126,8 @@ function CheckMark({ done }) {
   );
 }
 
-function Steps({ recipe }) {
-  const [checked, toggle, reset] = useChecked(`gustos-steps-${recipe.id}`);
+function Steps({ recipe, state }) {
+  const { checked, toggle, reset } = state;
   return (
     <section className="rounded-3xl border border-border bg-surface p-6 shadow-card">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -212,10 +188,14 @@ export default function RecipePage() {
   const [error, setError] = useState(null);
   const [servings, setServings] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cooking, setCooking] = useState(false);
+  const ingredientChecks = useChecked(`gustos-ingredients-${id}`);
+  const stepChecks = useChecked(`gustos-steps-${id}`);
 
   useEffect(() => {
     let cancelled = false;
     setRecipe(null);
+    setCooking(false);
     setError(null);
     api
       .get(`/api/recipes/${id}`)
@@ -325,18 +305,32 @@ export default function RecipePage() {
         )}
       </div>
 
-      <div className="mb-6 rounded-3xl border border-border bg-surface p-4 shadow-card">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-surface p-4 shadow-card">
         <ServingsControl base={recipe.servings} servings={servings} setServings={setServings} />
+        <button
+          type="button"
+          onClick={() => setCooking(true)}
+          className="flex h-12 items-center gap-2 rounded-2xl bg-accent px-5 font-semibold text-on-accent"
+          title="Pașii pe tot ecranul, cu ecranul mereu aprins"
+        >
+          <ChefHat size={22} aria-hidden="true" /> Gătesc acum
+        </button>
       </div>
 
       <div className="mb-6 grid gap-6 md:grid-cols-5">
         <div className="md:col-span-2">
-          <Ingredients recipe={recipe} servings={servings} />
+          <Ingredients recipe={recipe} servings={servings} state={ingredientChecks} />
         </div>
         <div className="md:col-span-3">
-          <Steps recipe={recipe} />
+          <Steps recipe={recipe} state={stepChecks} />
         </div>
       </div>
+
+      {recipe.video_url && (
+        <div className="mb-6">
+          <RecipeVideo url={recipe.video_url} title={recipe.title} />
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <TextBlock icon={Lightbulb} title="Sfaturi utile" text={recipe.tips} />
@@ -350,6 +344,16 @@ export default function RecipePage() {
             {recipe.source_site} <ExternalLink size={14} aria-hidden="true" />
           </a>
         </p>
+      )}
+
+      {cooking && (
+        <CookMode
+          recipe={recipe}
+          servings={servings}
+          ingredients={ingredientChecks}
+          steps={stepChecks}
+          onClose={() => setCooking(false)}
+        />
       )}
 
       <ConfirmDialog

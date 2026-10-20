@@ -8,6 +8,7 @@ Pentru fiecare câmp se alege cea mai bună sursă disponibilă. Rezultatul este
 utilizator în previzualizare.
 """
 
+import json
 import re
 import warnings
 from urllib.parse import urljoin
@@ -17,6 +18,7 @@ from bs4 import BeautifulSoup, Tag
 from ..text import fix_romanian, normalize
 from .ingredient_parser import parse_ingredient
 from .recipes import site_from_url
+from . import video
 
 HEADINGS = ["h1", "h2", "h3", "h4", "h5", "h6"]
 NOISE = "script, style, noscript, nav, header, footer, aside, form, iframe, svg, .comments, #comments, .sharedaddy, .related, .jp-relatedposts, .wp-block-buttons"
@@ -287,6 +289,54 @@ def _first_content_image(soup: BeautifulSoup) -> str | None:
     return None
 
 
+_VIDEO_ATTRS = ("src", "data-src", "data-lazy-src", "data-litespeed-src")
+_OUTSIDE_TAGS = {"aside", "footer", "header", "nav"}
+_OUTSIDE_CLASSES = {"sidebar", "widget", "related", "jp-relatedposts", "comments"}
+
+
+def _outside_recipe(el: Tag) -> bool:
+    """Clipurile din bara laterală, subsol sau „rețete similare” nu sunt ale rețetei."""
+    for parent in el.parents:
+        if parent.name in _OUTSIDE_TAGS or parent.get("id") == "comments":
+            return True
+        if _OUTSIDE_CLASSES & set(parent.get("class") or []):
+            return True
+    return False
+
+
+def _video_objects(data, found: list) -> None:
+    if isinstance(data, dict):
+        kind = data.get("@type")
+        if kind == "VideoObject" or (isinstance(kind, list) and "VideoObject" in kind):
+            found.extend(u for u in (data.get("embedUrl"), data.get("contentUrl")) if isinstance(u, str))
+        for value in data.values():
+            _video_objects(value, found)
+    elif isinstance(data, list):
+        for value in data:
+            _video_objects(value, found)
+
+
+def _find_video(soup: BeautifulSoup) -> str | None:
+    """Clipul rețetei: din datele schema.org (VideoObject), altfel primul YouTube/Vimeo din articol."""
+    candidates = []
+    for script in soup.find_all("script", type="application/ld+json"):
+        try:
+            _video_objects(json.loads(script.string or ""), candidates)
+        except ValueError:
+            continue
+    for el in soup.find_all(["iframe", "div", "lite-youtube", "lite-vimeo"]):
+        found = [el.get(a) for a in _VIDEO_ATTRS if el.get(a)]
+        # WP Rocket / lite-youtube păstrează doar ID-ul clipului
+        if vid := el.get("videoid") or ("rll-youtube-player" in (el.get("class") or []) and el.get("data-id")):
+            found.append(f"https://www.youtube.com/watch?v={vid}")
+        if found and not _outside_recipe(el):
+            candidates.extend(found)
+    for url in candidates:
+        if video.is_embeddable(video.canonical(url)):
+            return video.canonical(url)
+    return None
+
+
 def _clean_title(title: str | None, site_name: str | None, url: str) -> str | None:
     """Fără „– Retetele Mihaelei” / „| Jamila Cuisine” / „| Video” la final."""
     if not title:
@@ -319,6 +369,7 @@ def extract_recipe(html: str, url: str) -> dict:
     page_title = _meta(soup, "og:title") or _text(soup.select_one(".entry-title")) or _text(soup.find("title")) or _text(soup.find("h1"))
     og_image = _meta(soup, "og:image") or _first_content_image(soup)
     meta_description = _meta(soup, "og:description") or _meta(soup, "description")
+    video_url = _find_video(soup)
     language = (schema.get("language") or (soup.html.get("lang") if soup.html else "") or "").split("-")[0].lower() or None
     for el in soup.select(NOISE):
         el.decompose()
@@ -377,6 +428,7 @@ def extract_recipe(html: str, url: str) -> dict:
         "steps": steps,
         "tips": tips,
         "source_url": url,
+        "video_url": video_url,
         "source_site": site_from_url(url),
         "original_language": language,
         "image_url": urljoin(url, image) if image else None,

@@ -13,7 +13,7 @@ _NOW = "strftime('%Y-%m-%dT%H:%M:%S', 'now')"
 
 _RECIPE_FIELDS = [
     "title", "description", "servings", "prep_time", "cook_time", "difficulty", "category_id",
-    "tips", "notes", "source_url", "source_site", "original_language", "calories_per_serving",
+    "tips", "notes", "source_url", "video_url", "source_site", "original_language", "calories_per_serving",
 ]
 
 
@@ -58,11 +58,11 @@ def _write_children(conn: sqlite3.Connection, recipe_id: int, data: RecipeIn) ->
             "INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) SELECT ?, id FROM tags WHERE name = ?",
             (recipe_id, tag),
         )
-    _sync_fts(conn, recipe_id)
+    sync_fts(conn, recipe_id)
     _delete_unused_tags(conn)
 
 
-def _sync_fts(conn: sqlite3.Connection, recipe_id: int) -> None:
+def sync_fts(conn: sqlite3.Connection, recipe_id: int) -> None:
     conn.execute("DELETE FROM recipes_fts WHERE rowid = ?", (recipe_id,))
     conn.execute(
         """INSERT INTO recipes_fts (rowid, title, description, ingredients, tags)

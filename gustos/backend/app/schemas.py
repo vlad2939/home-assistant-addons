@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, Field, field_validator
 
+from .services import video
 from .text import fix_romanian
 
 
@@ -42,6 +43,7 @@ class RecipeIn(BaseModel):
     tips: Text = Field(default=None, max_length=10000)
     notes: Text = Field(default=None, max_length=10000)
     source_url: Text = Field(default=None, max_length=2000)
+    video_url: Text = Field(default=None, max_length=500)
     source_site: Text = Field(default=None, max_length=200)
     original_language: Text = Field(default=None, max_length=10)
     calories_per_serving: float | None = Field(default=None, ge=0, le=100000)
@@ -74,6 +76,13 @@ class RecipeIn(BaseModel):
             raise ValueError("Linkul sursei trebuie să înceapă cu http:// sau https://")
         return v
 
+    @field_validator("video_url")
+    @classmethod
+    def _video_link(cls, v):
+        if v and not v.lower().startswith(("http://", "https://")):
+            raise ValueError("Linkul video trebuie să înceapă cu http:// sau https://")
+        return video.canonical(v)
+
 
 class CategoryIn(BaseModel):
     name: RequiredText = Field(min_length=1, max_length=60)
@@ -81,3 +90,7 @@ class CategoryIn(BaseModel):
 
 class CategoryOrder(BaseModel):
     ids: list[int]
+
+
+class TagIn(BaseModel):
+    name: RequiredText = Field(min_length=1, max_length=50)

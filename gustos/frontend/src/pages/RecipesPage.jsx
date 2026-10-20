@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Check, Heart, Plus, Search, SearchX, X } from "lucide-react";
+import { Check, Heart, Plus, Search, SearchX, Video, X } from "lucide-react";
 import { api } from "../api.js";
 import { useApp } from "../AppContext.jsx";
 import { sourceLabel } from "../format.js";
@@ -18,7 +18,7 @@ const SORTS = [
   { id: "time", label: "Timp total" },
 ];
 
-// Filtrele stau în adresa paginii (?q=…&categorie=…&ingredient=…&tag=…&sursa=…&favorite=1&sortare=…),
+// Filtrele stau în adresa paginii (?q=…&categorie=…&ingredient=…&tag=…&sursa=…&favorite=1&video=1&sortare=…),
 // deci se păstrează la „Înapoi” și se pot salva ca semn de carte.
 function Chip({ children, onRemove }) {
   return (
@@ -47,6 +47,7 @@ export default function RecipesPage() {
   const selectedTags = params.getAll("tag");
   const source = params.get("sursa");
   const favorite = params.get("favorite") === "1";
+  const withVideo = params.get("video") === "1";
   const sort = params.get("sortare");
   const category = categories.find((c) => String(c.id) === categoryId);
 
@@ -76,6 +77,7 @@ export default function RecipesPage() {
     selectedTags.forEach((t) => p.append("tags", t));
     if (source) p.set("source", source);
     if (favorite) p.set("favorite", "true");
+    if (withVideo) p.set("video", "true");
     if (sort) p.set("sort", sort);
     return p.toString();
   }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -102,13 +104,13 @@ export default function RecipesPage() {
     api.get("/api/sources").then(setSources).catch(() => {});
   }, []);
 
-  const hasFilters = Boolean(params.get("q") || ingredients.length || selectedTags.length || source || favorite);
+  const hasFilters = Boolean(params.get("q") || ingredients.length || selectedTags.length || source || favorite || withVideo);
   const resetFilters = () => {
     setText("");
     setParams(categoryId ? { categorie: categoryId } : {});
   };
 
-  const title = category ? category.name : favorite ? "Favorite" : "Toate rețetele";
+  const title = category ? category.name : favorite ? "Favorite" : withVideo ? "Rețete cu video" : "Toate rețetele";
 
   const sortOptions = SORTS.filter((s) => !s.needsQuery || params.get("q"));
   const activeSort = sort && sortOptions.some((s) => s.id === sort) ? sort : params.get("q") ? "relevance" : "recent";
@@ -198,6 +200,16 @@ export default function RecipesPage() {
         >
           <Heart size={18} fill={favorite ? "currentColor" : "none"} aria-hidden="true" />
           Doar favorite
+        </button>
+
+        <button
+          type="button"
+          onClick={() => update({ video: withVideo ? "" : "1" })}
+          aria-pressed={withVideo}
+          className={`flex h-11 items-center gap-2 rounded-2xl border px-4 font-medium ${withVideo ? "border-accent bg-accent-soft text-accent-strong" : "border-border bg-surface hover:bg-surface-2"}`}
+        >
+          <Video size={18} aria-hidden="true" />
+          Cu video
         </button>
 
         <label className="ml-auto flex items-center gap-2 text-sm text-muted">

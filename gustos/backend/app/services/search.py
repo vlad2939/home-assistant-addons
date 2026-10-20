@@ -30,6 +30,7 @@ class Filters:
     source: str | None = None
     favorite: bool | None = None
     sort: str | None = None
+    video: bool | None = None
 
 
 def fts_query(text: str | None) -> str | None:
@@ -71,6 +72,8 @@ def list_recipes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
     if f.favorite is not None:
         where.append("r.favorite = ?")
         params.append(int(f.favorite))
+    if f.video is not None:
+        where.append("r.video_url IS NOT NULL" if f.video else "r.video_url IS NULL")
 
     sort = f.sort if f.sort in SORTS else None
     if sort is None:

@@ -22,6 +22,7 @@ Gustos este caietul tău de rețete. Rulează pe serverul din casă (Home Assist
    - **Tag-uri** – bifează unul sau mai multe.
    - **Sursă** – un anumit site sau „Adăugate manual”.
    - **Doar favorite**.
+   - **Cu video** – doar rețetele care au un clip (ca și cardul „Cu video” de pe Acasă).
    - **Categoria** – din lista din stânga.
 5. **Sortare**: relevanță, adăugate recent, modificate recent, titlu sau timp total.
 6. **Resetează filtrele** le șterge pe toate odată.
@@ -30,10 +31,21 @@ Gustos este caietul tău de rețete. Rulează pe serverul din casă (Home Assist
 
 - **Porții − / +** recalculează cantitățile. „la gust”, „un praf” sau „2-3” rămân neschimbate. **Revino la …** readuce numărul inițial de porții.
 - Atinge un **ingredient** sau un **pas** ca să-l bifezi pe măsură ce gătești. Contorul (de exemplu 3/8) arată cât ai folosit, iar **Debifează tot** le resetează. Bifele rămân cât timp tab-ul e deschis.
+- **Video**: dacă rețeta are un clip YouTube sau Vimeo, apasă pe imaginea lui ca să pornească direct în pagină. Clipul are nevoie de internet; **Deschide pe YouTube** îl deschide într-o filă nouă.
 - Butoane:
   - **♥** – adaugă sau scoate rețeta de la favorite;
   - **Editează** – deschide formularul rețetei;
   - **Șterge** – cere confirmare, apoi șterge definitiv rețeta, împreună cu poza.
+
+## Modul „Gătesc acum”
+
+Butonul **Gătesc acum** (lângă porții) afișează rețeta pe tot ecranul, cu litere mari:
+
+- câte un **pas** pe ecran: **Pasul următor** / **Înapoi**, săgețile ← → de pe tastatură sau glisare stânga / dreapta pe tabletă. Pașii parcurși se bifează singuri;
+- bara de sus arată toți pașii; atinge una din liniuțe ca să sari la acel pas;
+- **ingredientele** (cu cantitățile pentru porțiile alese) stau în stânga, iar pe ecranele mici se deschid cu butonul **Ingrediente**;
+- **ecranul rămâne aprins** cât timp ești în acest mod (mesajul „Ecranul rămâne aprins” din bara de sus);
+- **Esc** sau **✕** închide modul. Dacă îl redeschizi, continui de la pasul la care ai rămas.
 
 ## Adăugarea și editarea unei rețete
 
@@ -46,13 +58,14 @@ Gustos este caietul tău de rețete. Rulează pe serverul din casă (Home Assist
    - **Adaugă grup** creează o secțiune separată, de exemplu „Pentru sos”.
    - Săgețile ↑ ↓ mută rândurile.
 5. **Pașii** se mută tot cu săgeți. Dacă lipești toți pașii odată într-un câmp gol, fiecare rând devine un pas.
-6. Apasă **Salvează rețeta**. Dacă încerci să pleci de pe pagină fără să salvezi, aplicația te avertizează.
+6. **Video (link)**: lipește linkul clipului de pe YouTube (sau Vimeo). Orice formă de link merge, inclusiv cel de la butonul „Distribuie” din aplicația YouTube.
+7. Apasă **Salvează rețeta**. Dacă încerci să pleci de pe pagină fără să salvezi, aplicația te avertizează.
 
 ## Importul dintr-un link
 
 1. Copiază linkul rețetei din browser.
 2. În **Import**, lipește linkul și apasă **Importă**.
-3. Verifică **previzualizarea**: titlul, categoria sugerată, porțiile, ingredientele, pașii și poza. Corectează ce e nevoie.
+3. Verifică **previzualizarea**: titlul, categoria sugerată, porțiile, ingredientele, pașii, poza și linkul video (dacă pagina are un clip). Corectează ce e nevoie.
 4. Apasă **Salvează rețeta**. Poza se descarcă pe server abia acum.
 
 Bine de știut:
@@ -64,7 +77,9 @@ Bine de știut:
 ## Setări
 
 - **Aspect** – temă automată (după sistem), luminoasă sau întunecată, și una din cele 5 culori de accent. Alegerea este aceeași pe toate dispozitivele.
+- **Pornește în ecran complet** – se aplică doar pe dispozitivul pe care o activezi (de exemplu tableta din bucătărie). Browserul permite ecranul complet abia după o atingere, așa că Gustos trece în ecran complet la primul click.
 - **Categorii** – adaugi, redenumești, ordonezi cu săgețile sau ștergi o categorie. O categorie care are rețete se poate șterge doar dacă alegi unde să fie mutate rețetele ei.
+- **Tag-uri** – redenumești sau ștergi un tag (rețetele rămân). Dacă redenumești un tag cu numele altuia existent, de exemplu „de post” în „post”, cele două se unesc. Tag-urile noi se adaugă din formularul rețetei.
 - **Site-uri pentru import** – adaugi un site nou (de exemplu „exemplu.ro”) sau activezi / dezactivezi unul existent.
 - **Backup**:
   - **Exportă tot** descarcă un fișier ZIP cu toate rețetele și pozele. Fă un export după fiecare sesiune mare de adăugat rețete și păstrează fișierul într-un loc sigur.
@@ -75,7 +90,7 @@ Pe lângă exportul manual, datele intră automat în backup-urile Home Assistan
 ## Pe tabletă
 
 - În Chrome: meniul ⋮ → **Adaugă pe ecranul principal**, ca să deschizi Gustos ca pe o aplicație.
-- Pentru ecran complet pe laptop sau PC, apasă **F11**.
+- Pentru ecran complet folosește butonul din dreapta sus (sau **F11** pe laptop / PC), ori activează **Setări → Pornește în ecran complet**.
 
 ## Probleme frecvente
 

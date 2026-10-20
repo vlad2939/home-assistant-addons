@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { Download, House, Maximize, Menu, Minimize, Moon, PlusCircle, Settings, Sun, UtensilsCrossed } from "lucide-react";
 import { useApp } from "../AppContext.jsx";
+import { exitFullscreen, enterFullscreen, fullscreenSupported } from "../screen.js";
 
 export const NAV_ITEMS = [
   { to: "/", label: "Acasă", icon: House, end: true },
@@ -26,7 +27,7 @@ function useShownTheme() {
 
 /** Ecran complet (ca F11). Butonul lipsește dacă browserul nu permite. */
 function FullscreenButton() {
-  const supported = Boolean(document.documentElement.requestFullscreen);
+  const supported = fullscreenSupported();
   const [active, setActive] = useState(Boolean(document.fullscreenElement));
 
   useEffect(() => {
@@ -36,7 +37,7 @@ function FullscreenButton() {
   }, []);
 
   if (!supported) return null;
-  const toggle = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {});
+  const toggle = () => (document.fullscreenElement ? exitFullscreen() : enterFullscreen());
   const label = active ? "Ieși din ecran complet" : "Ecran complet";
   return (
     <button type="button" onClick={toggle} className={toolButton} aria-label={label} title={label}>
@@ -72,7 +73,7 @@ export default function TopBar({ onLogoClick, onMenuClick }) {
       <button type="button" onClick={onLogoClick} className="shrink-0 rounded-xl" aria-label="Arată logo-ul">
         <img src="/logo-small.webp" alt="" className="h-11 w-11 rounded-xl" />
       </button>
-      <Link to="/" className="mr-2 hidden text-xl font-semibold tracking-tight sm:block">
+      <Link to="/" className="shimmer-text mr-2 hidden text-[1.625rem] font-semibold leading-none tracking-tight sm:block">
         Gustos
       </Link>
 

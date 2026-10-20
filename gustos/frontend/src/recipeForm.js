@@ -22,6 +22,7 @@ export function emptyForm() {
     tips: "",
     notes: "",
     source_url: "",
+    video_url: "",
   };
 }
 
@@ -57,6 +58,7 @@ export function toForm(recipe) {
     tips: str(recipe.tips),
     notes: str(recipe.notes),
     source_url: str(recipe.source_url),
+    video_url: str(recipe.video_url),
   };
 }
 
@@ -83,6 +85,8 @@ export function toPayload(form) {
 
   const source = form.source_url.trim();
   if (source && !/^https?:\/\/\S+$/i.test(source)) errors.source_url = "Linkul trebuie să înceapă cu http:// sau https://";
+  const video = form.video_url.trim();
+  if (video && !/^https?:\/\/\S+$/i.test(video)) errors.video_url = "Linkul trebuie să înceapă cu http:// sau https://";
 
   const ingredients = [];
   for (const group of form.groups) {
@@ -117,6 +121,7 @@ export function toPayload(form) {
     tips: form.tips.trim() || null,
     notes: form.notes.trim() || null,
     source_url: source || null,
+    video_url: video || null,
   };
   return { payload, errors };
 }

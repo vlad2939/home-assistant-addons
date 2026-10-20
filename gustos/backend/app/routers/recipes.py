@@ -18,10 +18,11 @@ def search(
     tags: list[str] = Query(default=[]),
     source: str | None = None,
     favorite: bool | None = None,
+    video: bool | None = None,
     sort: str | None = None,
     conn: sqlite3.Connection = Depends(db.get_conn),
 ):
-    items = list_recipes(conn, Filters(q, category, ingredient, tags, source, favorite, sort))
+    items = list_recipes(conn, Filters(q, category, ingredient, tags, source, favorite, sort, video))
     return {"total": len(items), "items": items}
 
 

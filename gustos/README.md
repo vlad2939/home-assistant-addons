@@ -8,7 +8,9 @@ Aplicație web personală pentru rețete culinare, ca add-on Home Assistant OS. 
 - **Adăugare și editare** completă: poză (fișier sau camera tabletei), ingrediente pe grupuri, pași reordonabili, sfaturi, note.
 - **Import dintr-un link** de pe site-urile românești permise, cu previzualizare editabilă înainte de salvare.
 - **Scalarea porțiilor**, cu bife la ingrediente și pași pe măsură ce gătești.
-- Teme **dark / light** și 5 culori de accent.
+- Modul **„Gătesc acum”**: pașii unul câte unul, pe tot ecranul, cu ecranul mereu aprins.
+- **Video**: clipurile YouTube / Vimeo ale rețetelor se redau direct în pagină (preluate automat la import).
+- Teme **dark / light** și 5 culori de accent; editor de categorii și tag-uri.
 - **Export ZIP și restaurare**, cu copie de siguranță automată.
 - Manual de utilizare inclus, în română.
 

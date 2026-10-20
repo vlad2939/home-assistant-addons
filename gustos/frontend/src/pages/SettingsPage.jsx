@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { BookOpen, Check, ChevronRight, Info, Laptop, Moon, Sun } from "lucide-react";
+import { BookOpen, Check, ChevronRight, Info, Laptop, Maximize, Moon, Sun } from "lucide-react";
 import { useApp } from "../AppContext.jsx";
 import { ACCENTS, THEMES } from "../theme.js";
+import { enterFullscreen, fullscreenSupported, getFullscreenAtStart, setFullscreenAtStart } from "../screen.js";
 import PageHeader from "../components/PageHeader.jsx";
 import AboutModal from "../components/AboutModal.jsx";
 import ManualModal from "../components/ManualModal.jsx";
-import { Section } from "../components/settings/common.jsx";
+import { Section, Switch } from "../components/settings/common.jsx";
 import CategoriesManager from "../components/settings/CategoriesManager.jsx";
+import TagsManager from "../components/settings/TagsManager.jsx";
 import ImportSitesManager from "../components/settings/ImportSitesManager.jsx";
 import BackupPanel from "../components/settings/BackupPanel.jsx";
 
@@ -34,6 +36,13 @@ export default function SettingsPage() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [error, setError] = useState(null);
+  const [fullscreenAtStart, setFullscreenAtStartState] = useState(getFullscreenAtStart);
+
+  const toggleFullscreenAtStart = (on) => {
+    setFullscreenAtStart(on);
+    setFullscreenAtStartState(on);
+    if (on) enterFullscreen(); // click-ul de acum permite deja ecranul complet
+  };
 
   const change = (value) => {
     setError(null);
@@ -43,7 +52,7 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader title="Setări" />
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Section title="Aspect">
           <p className="mb-2 text-sm font-medium text-muted">Temă</p>
           <div className="mb-6 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Temă">
@@ -92,6 +101,19 @@ export default function SettingsPage() {
             })}
           </div>
           {error && <p className="mt-4 text-sm text-[var(--accent-red)]">{error}</p>}
+
+          {fullscreenSupported() && (
+            <div className="mt-6 flex items-center gap-4 border-t border-border pt-5">
+              <Maximize size={22} className="shrink-0 text-accent" aria-hidden="true" />
+              <span className="flex-1">
+                <span className="block font-medium">Pornește în ecran complet</span>
+                <span className="block text-sm text-muted">
+                  Doar pe acest dispozitiv. Browserul permite ecranul complet abia după o atingere, așa că Gustos trece în ecran complet la primul click.
+                </span>
+              </span>
+              <Switch checked={fullscreenAtStart} onChange={toggleFullscreenAtStart} label="Pornește în ecran complet" />
+            </div>
+          )}
         </Section>
 
         <Section title="Ajutor">
@@ -100,6 +122,7 @@ export default function SettingsPage() {
         </Section>
 
         <CategoriesManager />
+        <TagsManager />
         <ImportSitesManager />
         <BackupPanel />
       </div>

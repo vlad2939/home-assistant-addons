@@ -4,16 +4,22 @@ import { X } from "lucide-react";
 import TopBar from "./TopBar.jsx";
 import SideBar from "./SideBar.jsx";
 import LogoLightbox from "./LogoLightbox.jsx";
+import { armFullscreenAtStart } from "../screen.js";
 
 /** Mențiunea de autor, la baza panoului cu categorii. */
 function Copyright() {
-  return <footer className="mt-auto px-6 pb-4 pt-6 text-xs text-muted">© concept și realizare vlad39</footer>;
+  return (
+    <footer className="mx-3 mt-auto border-t border-border px-3 pb-4 pt-4 text-xs text-muted">© concept și realizare vlad39</footer>
+  );
 }
 
 export default function Layout() {
   const [logoOpen, setLogoOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
+
+  // Setarea „Pornește în ecran complet”: se aplică la prima atingere (cerința browserelor).
+  useEffect(() => armFullscreenAtStart(), []);
 
   // Panoul de categorii (tabletă portret) se închide la navigare și cu ESC.
   useEffect(() => setDrawerOpen(false), [location]);

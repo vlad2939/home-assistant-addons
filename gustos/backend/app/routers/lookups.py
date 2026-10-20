@@ -1,4 +1,4 @@
-"""Liste pentru filtre și autocompletare: tag-uri, ingrediente, surse, statistici."""
+"""Liste pentru filtre și autocompletare: ingrediente, surse, statistici."""
 
 import sqlite3
 
@@ -12,19 +12,6 @@ router = APIRouter(prefix="/api", tags=["lookups"])
 
 def _like_prefix(text: str) -> str:
     return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-
-
-@router.get("/tags")
-def tags(prefix: str | None = None, conn: sqlite3.Connection = Depends(db.get_conn)):
-    rows = conn.execute(
-        """SELECT t.id, t.name, COUNT(rt.recipe_id) AS recipe_count
-           FROM tags t LEFT JOIN recipe_tags rt ON rt.tag_id = t.id
-           GROUP BY t.id ORDER BY t.name COLLATE ro"""
-    ).fetchall()
-    items = [dict(r) for r in rows]
-    if prefix and (p := normalize(prefix)):
-        items = [t for t in items if normalize(t["name"]).startswith(p)]
-    return items
 
 
 @router.get("/ingredients")
@@ -61,6 +48,7 @@ def stats(conn: sqlite3.Connection = Depends(db.get_conn)):
     return {
         "recipes": one("SELECT COUNT(*) FROM recipes"),
         "favorites": one("SELECT COUNT(*) FROM recipes WHERE favorite = 1"),
+        "videos": one("SELECT COUNT(*) FROM recipes WHERE video_url IS NOT NULL"),
         "uncategorized": one("SELECT COUNT(*) FROM recipes WHERE category_id IS NULL"),
         "categories": one("SELECT COUNT(*) FROM categories"),
         "tags": one("SELECT COUNT(*) FROM tags"),

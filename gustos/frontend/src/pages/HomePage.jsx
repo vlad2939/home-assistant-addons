@@ -9,11 +9,14 @@ import { RecipeGrid, RecipePhoto } from "../components/RecipeCard.jsx";
 
 const PREVIEW = 4;
 
-function Stat({ label, value, to }) {
+function Stat({ label, value, to, className = "" }) {
   return (
-    <Link to={to} className="rounded-3xl border border-border bg-surface p-5 shadow-card transition-colors hover:border-accent">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-1 text-3xl font-semibold tabular-nums">{value ?? "–"}</p>
+    <Link
+      to={to}
+      className={`flex items-baseline justify-between gap-2 rounded-3xl border border-border bg-surface px-4 py-3.5 shadow-card transition-colors hover:border-accent ${className}`}
+    >
+      <span className="truncate text-sm text-muted">{label}</span>
+      <span className="text-2xl font-semibold tabular-nums xl:text-3xl">{value ?? "–"}</span>
     </Link>
   );
 }
@@ -104,9 +107,10 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Stat label="Rețete" value={stats?.recipes} to="/retete" />
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5 xl:gap-4">
+        <Stat label="Rețete" value={stats?.recipes} to="/retete" className="col-span-2 md:col-span-1" />
         <Stat label="Favorite" value={stats?.favorites} to="/retete?favorite=1" />
+        <Stat label="Cu video" value={stats?.videos} to="/retete?video=1" />
         <Stat label="Categorii" value={stats?.categories} to="/retete" />
         <Stat label="Tag-uri" value={stats?.tags} to="/retete" />
       </div>

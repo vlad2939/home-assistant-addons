@@ -1,5 +1,18 @@
 # Istoric versiuni
 
+## 1.1.0 – 20.10.2026
+
+- **Video la rețete**: câmp nou „Video (link)” în formular. La import, clipul YouTube / Vimeo al paginii se preia automat. Pe pagina rețetei, clipul pornește direct în pagină (YouTube fără cookie-uri), cu link și spre site-ul clipului.
+- **Modul „Gătesc acum”**: pașii pe tot ecranul, cu litere mari, ingredientele alături, navigare cu butoane, săgeți sau glisare, ecranul mereu aprins (inclusiv pe `http://`, prin tehnica NoSleep).
+- **Setări → Tag-uri**: redenumirea, unirea și ștergerea tag-urilor.
+- **Setări → Pornește în ecran complet** (pe fiecare dispozitiv în parte).
+- Titlul „Gustos” din bara de sus este mai mare, cu un efect de lumină în culoarea de accent.
+- Acasă: card nou „Cu video” (5 carduri), iar numerele sunt pe același rând cu textul, deci cardurile ocupă mai puțin loc.
+- Lista de rețete: filtru nou **Cu video**.
+- Separator deasupra mențiunii © din panoul cu categorii.
+- Corectură: pagina Setări nu se mai derulează pe orizontală pe telefon.
+- Baza de date trece la versiunea 2 (coloana `video_url`), automat la pornire. Backup-urile vechi se pot restaura în continuare.
+
 ## 1.0.0 – 19.10.2026
 
 Prima versiune stabilă. Testul de acceptanță (13 criterii) a trecut pe NUC, PC, laptop și tabletă: `docs/test-acceptanta-etapa10.md`.
