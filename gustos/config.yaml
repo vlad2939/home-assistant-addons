@@ -1,5 +1,5 @@
 name: "Gustos"
-version: "1.2.0"
+version: "1.5.0"
 slug: "gustos"
 description: "Aplicație de rețete culinare"
 url: "https://github.com/vlad2939/home-assistant-addons/tree/main/gustos"
@@ -20,3 +20,4 @@ watchdog: "http://[HOST]:[PORT:8099]/api/health"
 backup: cold
 backup_exclude:
   - "backups/*"
+  - "models/*"

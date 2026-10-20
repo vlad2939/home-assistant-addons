@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config, db
-from .routers import backup, categories, import_sites, importer, lookups, photos, recipes, settings, tags
+from .routers import backup, categories, import_sites, importer, lookups, photos, recipes, settings, tags, translate
 
 
 @asynccontextmanager
@@ -24,7 +24,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-for module in (recipes, photos, importer, import_sites, categories, tags, lookups, settings, backup):
+for module in (recipes, photos, importer, import_sites, categories, tags, lookups, settings, translate, backup):
     app.include_router(module.router)
 
 
@@ -39,7 +39,9 @@ def about():
         "name": "Gustos",
         "version": config.version(),
         "description": "Aplicație web pentru gestionarea rețetelor culinare.",
-        "technologies": ["Python", "FastAPI", "SQLite", "React", "Vite", "Tailwind CSS"],
+        "technologies": ["Python", "FastAPI", "SQLite", "React", "Vite", "Tailwind CSS", "CTranslate2"],
+        "credits": "Traducerea pe NUC folosește modelul OPUS-MT engleză–română (J. Tiedemann, S. Thottingal), "
+        "licență CC-BY 4.0, în varianta Argos Translate.",
         "copyright": "© concept și realizare vlad39",
     }
 

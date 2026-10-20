@@ -9,6 +9,7 @@ import ManualModal from "../components/ManualModal.jsx";
 import { Section, Switch } from "../components/settings/common.jsx";
 import CategoriesManager from "../components/settings/CategoriesManager.jsx";
 import TagsManager from "../components/settings/TagsManager.jsx";
+import TranslationSettings from "../components/settings/TranslationSettings.jsx";
 import ImportSitesManager from "../components/settings/ImportSitesManager.jsx";
 import BackupPanel from "../components/settings/BackupPanel.jsx";
 
@@ -124,6 +125,7 @@ export default function SettingsPage() {
         <CategoriesManager />
         <TagsManager />
         <ImportSitesManager />
+        <TranslationSettings />
         <BackupPanel />
       </div>
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />

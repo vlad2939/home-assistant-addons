@@ -7,6 +7,7 @@ import { toForm, toPayload } from "../recipeForm.js";
 import { saveRecipe } from "./RecipeEditPage.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import TranslatePanel from "../components/form/TranslatePanel.jsx";
 import RecipeForm from "../components/form/RecipeForm.jsx";
 import UnsavedChangesGuard from "../components/form/UnsavedChangesGuard.jsx";
 
@@ -86,7 +87,7 @@ export default function ImportPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const r = await saveRecipe({ id: null, payload: { ...payload, source_site: result.site, original_language: result.language }, photo });
+      const r = await saveRecipe({ id: null, payload: { ...payload, source_site: result.site }, photo });
       refreshCatalog();
       setSaved({ id: r.id, notice: r.photoError && `Rețeta a fost salvată, dar poza nu: ${r.photoError}` });
     } catch (err) {
@@ -175,6 +176,8 @@ export default function ImportPage() {
           ))}
         </div>
       )}
+
+      <TranslatePanel form={form} setForm={setForm} />
 
       <RecipeForm form={form} setForm={setForm} photo={photo} setPhoto={setPhoto} currentPhoto={null} errors={errors} />
 

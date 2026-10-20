@@ -69,6 +69,13 @@ Butonul **Gătesc acum** (lângă porții) afișează rețeta pe tot ecranul, cu
 3. Verifică **previzualizarea**: titlul, categoria sugerată, porțiile, ingredientele, pașii, poza și linkul video (dacă pagina are un clip). Corectează ce e nevoie.
 4. Apasă **Salvează rețeta**. Poza se descarcă pe server abia acum.
 
+### Rețete în engleză
+
+- La import, unitățile se transformă automat: cup → cană, tbsp → lingură, tsp → linguriță, oz și lb → grame, °F → °C, inch → cm.
+- În previzualizare apare bara **Rețeta este în engleză** cu butonul **Tradu în română**. Traducerea durează câteva secunde (pe NUC, până la un minut).
+- Citește textul tradus și corectează ce nu sună bine. **Revino la textul în engleză** anulează traducerea.
+- Butonul apare și la **Editează**, pentru rețetele în engleză salvate fără traducere.
+
 Bine de știut:
 
 - Se poate importa doar de pe site-urile din **Setări → Site-uri pentru import**.
@@ -82,6 +89,9 @@ Bine de știut:
 - **Categorii** – adaugi, redenumești, ordonezi cu săgețile sau ștergi o categorie. O categorie care are rețete se poate șterge doar dacă alegi unde să fie mutate rețetele ei.
 - **Tag-uri** – redenumești sau ștergi un tag (rețetele rămân). Dacă redenumești un tag cu numele altuia existent, de exemplu „de post” în „post”, cele două se unesc. Tag-urile noi se adaugă din formularul rețetei.
 - **Site-uri pentru import** – adaugi un site nou (de exemplu „exemplu.ro”) sau activezi / dezactivezi unul existent.
+- **Traducere din engleză** – alegi cine traduce:
+  - **DeepL (recomandat)**: traducere bună. Îți faci un cont gratuit „DeepL API Free” pe deepl.com/pro-api, copiezi cheia și o lipești aici. Planul gratuit are 500.000 de caractere pe lună (aproximativ 150 de rețete); **Verifică** arată cât ai folosit. Cheia rămâne doar pe serverul Gustos.
+  - **Pe NUC**: gratuit, fără cont, dar traducerea este doar aproximativă și trebuie corectată mai mult. Apasă o dată **Descarcă modelul** (~70 MB); apoi merge și fără internet. Dacă descarci modelul, Gustos îl folosește și când DeepL nu răspunde.
 - **Backup**:
   - **Exportă tot** descarcă un fișier ZIP cu toate rețetele și pozele. Fă un export după fiecare sesiune mare de adăugat rețete și păstrează fișierul într-un loc sigur.
   - **Restaurează din ZIP** înlocuiește toate datele curente cu cele din backup. Înainte de restaurare, aplicația salvează automat starea curentă ca „copie de siguranță”; ultimele 5 copii se pot descărca din aceeași secțiune.

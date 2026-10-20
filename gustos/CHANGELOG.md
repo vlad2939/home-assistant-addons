@@ -1,5 +1,15 @@
 # Istoric versiuni
 
+## 1.5.0 – 20.10.2026
+
+- **Traducere din engleză**: la rețetele importate în engleză, previzualizarea (și pagina Editează) are butonul **Tradu în română**. Se traduc titlul, descrierea, ingredientele, pașii și sfaturile; cantitățile, unitățile și poza rămân. **Revino la textul în engleză** anulează traducerea.
+- **Setări → Traducere din engleză**: „DeepL” (recomandat; cheie API gratuită, cu verificarea caracterelor folosite) sau „Pe NUC” (gratuit, fără cont, model OPUS-MT de ~70 MB descărcat o singură dată; traducere aproximativă). Dacă DeepL nu răspunde, se folosește traducerea pe NUC, când modelul e descărcat.
+- Dicționar culinar pentru ingredientele obișnuite („icing sugar” → zahăr pudră, „self-raising flour” → făină cu praf de copt).
+- Import în engleză: unitățile americane și britanice devin unități românești (cup → cană, tbsp → lingură, tsp → linguriță, oz / lb → grame, pinch → praf), °F devine °C, iar inch devine cm. Trimiterile „(Note 1)” și măsurile duble („30g / 2 tbsp”) se elimină.
+- Sugestia de categorie recunoaște și titlurile în engleză (cake, soup, bread, salad, chicken …).
+- Corectură: la editare, limba originală a rețetei nu se mai pierde.
+- Modelul de traducere (`/data/models`) nu intră în backup-urile Home Assistant.
+
 ## 1.2.0 – 20.10.2026
 
 - **Rețeta mea**: buton nou în formularul Adaugă / Editează care marchează rețeta ca fiind a ta. Rețetele marcate au eticheta „Rețeta mea” pe card și pe pagina rețetei, iar în panoul din stânga apare „Rețetele mele”, cu numărul lor. Pe Acasă, secțiunea „Rețetele mele” apare deasupra celor adăugate recent.

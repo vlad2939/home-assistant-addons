@@ -7,6 +7,10 @@ Exemple:
     „sare, piper, după gust”           → –, la gust, „sare, piper”
 Dacă rândul nu poate fi înțeles, rămâne întreg în denumire, pentru corectare manuală.
 Funcționează și pe texte scrise fără diacritice („lingurita”, „catei”).
+
+Pentru rețetele în engleză (lang="en") se recunosc și unitățile americane / britanice, care devin
+unitățile românești: „2 cups flour” → 2 cană, „8 oz cheese” → 225 g, „a pinch of salt” → „un praf”.
+Denumirea și nota rămân în engleză (se traduc separat, din previzualizare).
 """
 
 import re
@@ -41,6 +45,46 @@ _UNIT_DETAIL = re.compile(
     r"^(cu varf|varfuita|varfuite|rasa|rase|plina|pline|bune|buna|generoasa|generoase|mare|mari|medie|medii|mica|mici)\b\s*(?:de\s+)?",
 )
 
+# Rețete în engleză: unitate → (unitatea românească, factor de conversie)
+EN_UNITS = {
+    ("cană", 1): ["cup", "cups"],
+    ("lingură", 1): ["tablespoon", "tablespoons", "tbsp", "tbsps", "tbs", "tbl", "tblsp"],
+    ("linguriță", 1): ["teaspoon", "teaspoons", "tsp", "tsps"],
+    ("ml", 29.57): ["fl oz", "fl. oz", "fluid ounce", "fluid ounces"],
+    ("g", 28.35): ["ounce", "ounces", "oz"],
+    ("g", 453.6): ["pound", "pounds", "lb", "lbs"],
+    ("ml", 473): ["pint", "pints"],
+    ("ml", 946): ["quart", "quarts", "qt"],
+    ("g", 113): ["stick", "sticks"],  # de unt
+    ("g", 1): ["gram", "grams", "g", "gr"],
+    ("kg", 1): ["kilogram", "kilograms", "kg"],
+    ("ml", 1): ["milliliter", "milliliters", "millilitre", "millilitres", "ml"],
+    ("l", 1): ["liter", "liters", "litre", "litres", "l"],
+    ("praf", 1): ["pinch", "pinches", "dash", "dashes"],
+    ("cățel", 1): ["clove", "cloves"],
+    ("felie", 1): ["slice", "slices"],
+    ("legătură", 1): ["bunch", "bunches"],
+    ("plic", 1): ["packet", "packets", "sachet", "sachets", "envelope", "envelopes"],
+    ("conservă", 1): ["can", "cans", "tin", "tins"],
+    ("bucată", 1): ["piece", "pieces"],
+}
+_EN_ALIASES = sorted(
+    ((a, unit, factor) for (unit, factor), aliases in EN_UNITS.items() for a in aliases), key=lambda x: -len(x[0])
+)
+_EN_WORD_NUMBERS = {
+    "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
+    "nine": 9, "ten": 10, "twelve": 12, "half": 0.5, "half a": 0.5, "a dozen": 12, "dozen": 12,
+}
+_EN_UNIT_DETAIL = re.compile(r"^(heaped|heaping|level|rounded|scant|generous|large|medium|small|big)\b\s*")
+_EN_NOTE_START = re.compile(
+    r"^(chopped|finely|roughly|coarsely|thinly|diced|sliced|minced|grated|shredded|crushed|peeled|halved|quartered|"
+    r"cubed|softened|melted|beaten|whisked|sifted|drained|rinsed|trimmed|seeded|deseeded|cored|toasted|cooked|"
+    r"cut|torn|zested|juiced|divided|plus|at room|room temperature|cold|warm|hot|fresh|frozen|thawed|"
+    r"to serve|for |about|approximately|or |such as|optional)"
+)
+_EN_TO_TASTE = re.compile(r"(?:,\s*|\s+)(?:to\s+taste|as\s+needed)\s*$|^(?:to\s+taste)\s*$", re.IGNORECASE)
+_EN_APPROX = re.compile(r"^(about|approximately|approx\.?|around|roughly)\s+", re.IGNORECASE)
+
 _WORD_NUMBERS = {
     "un": 1, "o": 1, "una": 1, "unu": 1, "doi": 2, "doua": 2, "trei": 3, "patru": 4, "cinci": 5,
     "sase": 6, "sapte": 7, "opt": 8, "noua": 9, "zece": 10, "jumatate": 0.5, "jumatate de": 0.5,
@@ -50,7 +94,7 @@ _UNICODE_FRACTIONS = {"¼": " 1/4", "½": " 1/2", "¾": " 3/4", "⅓": " 1/3", "
 _NUM = r"\d+(?:[.,]\d+)?"
 _QTY = re.compile(
     rf"^(?P<whole>{_NUM})?\s*(?:(?:si|și)\s+)?(?P<frac>\d+\s*/\s*\d+)?"  # 500 | 1,5 | 1/2 | 1 1/2 | 1 și 1/2
-    rf"(?:\s*(?:-|la|sau)\s*(?P<to>{_NUM}(?:\s*/\s*\d+)?))?"  # interval: 2-3, 2 la 3, 2 sau 3
+    rf"(?:\s*(?:-|la|sau|to|or)\s*(?P<to>{_NUM}(?:\s*/\s*\d+)?))?"  # interval: 2-3, 2 la 3, 2 sau 3, 2 to 3
     r"(?=\s|[a-zA-ZăâîșțĂÂÎȘȚ]|$)"
 )
 _APPROX = re.compile(r"^(aproximativ|aprox\.?|cca\.?|circa|vreo)\s+", re.IGNORECASE)
@@ -89,7 +133,22 @@ def _clean(text: str) -> str:
     return " ".join(text.split()).strip(" .;")
 
 
-def parse_ingredient(line: str) -> dict:
+def _convert(value: float, factor: float) -> float:
+    """Uncii / livre → grame: rotunjit la 5 g (sau la 1 g pentru cantități mici)."""
+    if factor == 1:
+        return value
+    value *= factor
+    return round(value / 5) * 5 if value >= 20 else round(value)
+
+
+def _convert_range(text: str, factor: float) -> str:
+    if factor == 1:
+        return text
+    return "-".join(f"{_convert(_number(part), factor):g}" for part in text.split("-"))
+
+
+def parse_ingredient(line: str, lang: str = "ro") -> dict:
+    english = lang == "en"
     result = {"quantity": None, "quantity_text": None, "unit": None, "name": "", "note": None}
     text = _clean(line)
     if not text:
@@ -98,17 +157,22 @@ def parse_ingredient(line: str) -> dict:
 
     # paranteze → notă
     def _paren(m):
-        notes.append(m.group(1).strip(" .,"))
+        note = m.group(1).strip(" .,")
+        # „(Note 1)” trimite la notele de pe site, care nu se importă
+        note = re.sub(r"(?:,\s*)?\b(?:see\s+)?notes?\s*\d*\s*$", "", note, flags=re.IGNORECASE).strip(" .,") if english else note
+        if note:
+            notes.append(note)
         return " "
     text = " ".join(re.sub(r"\(([^)]*)\)", _paren, text).split())
 
     if _OPTIONAL.search(text):
         text = _OPTIONAL.sub("", text)
         notes.append("opțional")
-    to_taste = bool(_TO_TASTE.search(text))
-    text = _TO_TASTE.sub("", text).strip(" ,")
+    taste = _EN_TO_TASTE if english else _TO_TASTE
+    to_taste = bool(taste.search(text))
+    text = taste.sub("", text).strip(" ,")
 
-    if m := _APPROX.match(text):
+    if m := (_EN_APPROX if english else _APPROX).match(text):
         notes.append("aproximativ")
         text = text[m.end():]
 
@@ -117,23 +181,51 @@ def parse_ingredient(line: str) -> dict:
     m = _QTY.match(text)
     if m and (m.group("whole") or m.group("frac")):
         if m.group("to"):
-            quantity_text = re.sub(r"\s*(?:-|la|sau)\s*", "-", m.group(0).strip(), count=1)
+            quantity_text = re.sub(r"\s*(?:-|la|sau|to|or)\s*", "-", m.group(0).strip(), count=1)
         else:
             whole = _number(m.group("whole")) if m.group("whole") else 0
             quantity = whole + (_number(m.group("frac")) if m.group("frac") else 0)
         text = text[m.end():].strip()
     else:
         words = text.split(" ")
+        numbers = _EN_WORD_NUMBERS if english else _WORD_NUMBERS
         for n in (2, 1):
-            if len(words) > n and normalize(" ".join(words[:n])) in _WORD_NUMBERS:
-                quantity = _WORD_NUMBERS[normalize(" ".join(words[:n]))]
+            if len(words) > n and normalize(" ".join(words[:n])) in numbers:
+                quantity = numbers[normalize(" ".join(words[:n]))]
                 word_amount = " ".join(words[:n])
                 text = " ".join(words[n:])
                 break
 
     # unitate (doar după o cantitate, ca să nu confundăm „l” din „lapte”)
     unit = None
-    if quantity is not None or quantity_text:
+    if (quantity is not None or quantity_text) and english:
+        # „1 heaped tsp” / „2 large cloves”: precizarea dinaintea unității → notă
+        if (m := _EN_UNIT_DETAIL.match(normalize(text))) and any(
+            normalize(text[m.end():]).startswith(a + " ") for a, _, _ in _EN_ALIASES
+        ):
+            notes.append(text[: len(m.group(1))].lower())
+            text = text[m.end():]
+        norm = normalize(text)
+        for alias, canonical, factor in _EN_ALIASES:
+            if norm == alias or norm.startswith(alias + " ") or norm.startswith(alias + "."):
+                unit = canonical
+                text = text[len(alias):].lstrip(". ")
+                if quantity is not None:
+                    quantity = _convert(quantity, factor)
+                elif quantity_text:
+                    quantity_text = _convert_range(quantity_text, factor)
+                break
+        if unit and (m := _EN_UNIT_DETAIL.match(normalize(text))):
+            notes.insert(0, text[: len(m.group(1))].lower())
+            text = text[m.end():]
+        # „30g / 2 tbsp butter”: cantitatea în celălalt sistem de măsură se renunță
+        if (m := re.match(r"^/\s*\d[\d.,/ ]*\s*([a-z][a-z. ]*?)\s+", normalize(text))) and any(
+            m.group(1).strip(". ") == a for a, _, _ in _EN_ALIASES
+        ):
+            text = text[m.end():]
+        text = re.sub(r"^of\s+", "", text, flags=re.IGNORECASE)
+        word_amount = "un" if quantity == 1 else None
+    elif quantity is not None or quantity_text:
         norm = normalize(text)
         for alias, canonical in _ALIASES:
             if norm == alias or norm.startswith(alias + " ") or norm.startswith(alias + "."):
@@ -158,7 +250,7 @@ def parse_ingredient(line: str) -> dict:
     # virgulă → notă, dacă urmează o precizare
     if "," in text:
         head, tail = text.split(",", 1)
-        if _NOTE_START.match(normalize(tail.strip())):
+        if (_EN_NOTE_START if english else _NOTE_START).match(normalize(tail.strip())):
             notes.insert(0, tail.strip())
             text = head
 

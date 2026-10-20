@@ -5,6 +5,7 @@ import { api } from "../api.js";
 import { useApp } from "../AppContext.jsx";
 import { emptyForm, formSignature, toForm, toPayload } from "../recipeForm.js";
 import PageHeader from "../components/PageHeader.jsx";
+import TranslatePanel from "../components/form/TranslatePanel.jsx";
 import RecipeForm from "../components/form/RecipeForm.jsx";
 import UnsavedChangesGuard from "../components/form/UnsavedChangesGuard.jsx";
 
@@ -86,6 +87,8 @@ export default function RecipeEditPage() {
   return (
     <form onSubmit={submit} noValidate>
       <PageHeader title={id ? "Editează rețeta" : "Adaugă rețetă"} subtitle="Câmpurile marcate cu * sunt obligatorii." />
+
+      <TranslatePanel form={form} setForm={setForm} />
 
       <RecipeForm form={form} setForm={setForm} photo={photo} setPhoto={setPhoto} currentPhoto={currentPhoto} errors={errors} />
 

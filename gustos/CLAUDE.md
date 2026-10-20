@@ -5,6 +5,7 @@ Stack: Python FastAPI + SQLite (WAL, FTS5) + React (Vite) + Tailwind.
 Utilizator: un singur utilizator, rețea locală, fără autentificare. Interfață doar în română.
 Port: 8099. Date persistente: /data (gustos.db, photos/). În dezvoltare: ./dev-data (în .gitignore).
 Layout: TopBar (logo clickabil, titlul „Gustos” cu efect shimmer, Acasă, Rețete, Adaugă, Import, Setări; în dreapta: ecran complet, temă), SideBar (Toate, Favorite, Rețetele mele, categorii), cu separator și "© concept și realizare vlad39" la baza lui (fără bară de subsol).
+Import în engleză: unități metrice + „Tradu în română” (services/translate.py: OPUS-MT local prin CTranslate2 sau DeepL; model în /data/models).
 Pagina rețetei: video (YouTube / Vimeo, încărcat la click) și modul „Gătesc acum” (ecran mereu aprins: Wake Lock sau clipul mut din public/keep-awake.*).
 Modale (ESC și click închid, fundal blurat în ton cu tema): logo lightbox fără text, manual_utilizare.md, Despre.
 Teme: dark/light + 5 culori de accent (portocaliu implicit), prin variabile CSS.

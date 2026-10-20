@@ -19,6 +19,7 @@ from ..text import fix_romanian, normalize
 from .ingredient_parser import parse_ingredient
 from .recipes import site_from_url
 from . import video
+from .english import to_metric
 
 HEADINGS = ["h1", "h2", "h3", "h4", "h5", "h6"]
 NOISE = "script, style, noscript, nav, header, footer, aside, form, iframe, svg, .comments, #comments, .sharedaddy, .related, .jp-relatedposts, .wp-block-buttons"
@@ -401,9 +402,13 @@ def extract_recipe(html: str, url: str) -> dict:
     ingredients = []
     for group_name, lines in groups:
         for line in lines:
-            parsed = parse_ingredient(line)
+            parsed = parse_ingredient(line, lang="en" if language == "en" else "ro")
             if parsed["name"]:
                 ingredients.append({"group_name": fix_romanian(group_name) if group_name else None, **parsed})
+
+    if language == "en":  # °F → °C, inch → cm (traducerea se face separat, din previzualizare)
+        steps = [to_metric(s) for s in steps]
+        tips = to_metric(tips)
 
     title = _clean_title(schema.get("title") or page_title, site_name, url)
     description = fix_romanian(schema.get("description") or meta_description)

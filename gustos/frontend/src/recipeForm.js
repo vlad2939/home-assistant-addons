@@ -24,6 +24,7 @@ export function emptyForm() {
     source_url: "",
     video_url: "",
     own: false,
+    original_language: "",
   };
 }
 
@@ -61,6 +62,7 @@ export function toForm(recipe) {
     source_url: str(recipe.source_url),
     video_url: str(recipe.video_url),
     own: Boolean(recipe.own),
+    original_language: str(recipe.original_language),
   };
 }
 
@@ -125,6 +127,7 @@ export function toPayload(form) {
     source_url: source || null,
     video_url: video || null,
     own: Boolean(form.own),
+    original_language: form.original_language || null,
   };
   return { payload, errors };
 }

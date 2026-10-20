@@ -30,6 +30,7 @@ export default function AboutModal({ open, onClose }) {
             </div>
           </div>
         )}
+        {about?.credits && <p className="text-xs text-muted">{about.credits}</p>}
         <p className="text-sm text-muted">© concept și realizare vlad39</p>
       </div>
     </Modal>
