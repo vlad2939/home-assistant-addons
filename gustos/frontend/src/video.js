@@ -15,9 +15,9 @@ export function parseVideo(url) {
   return { kind: "link", url: text };
 }
 
-/** Adresa playerului încorporat (varianta YouTube fără cookie-uri), pornit direct. */
+/** Adresa playerului încorporat, pornit direct (clipurile YouTube se redau de fapt prin youtube.js). */
 export function embedUrl(video) {
-  if (video?.kind === "youtube") return `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&playsinline=1`;
+  if (video?.kind === "youtube") return `https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&playsinline=1`;
   if (video?.kind === "vimeo") return `https://player.vimeo.com/video/${video.id}?autoplay=1&dnt=1`;
   return null;
 }

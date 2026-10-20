@@ -1,5 +1,9 @@
 # Istoric versiuni
 
+## 2.0.1 – 20.10.2026
+
+- Video: clipurile YouTube se redau prin playerul oficial YouTube. Dacă autorul unui clip nu permite redarea în afara YouTube pe tabletă (codul 150, de exemplu la clipurile cu promovare plătită), Gustos afișează explicația în locul ecranului gri „Videoclipul nu este disponibil”. Clipurile fără această restricție merg și pe tabletă.
+
 ## 2.0.0 – 20.10.2026
 
 Versiunea 2: meniuri, cumpărături, PDF și galerie foto. Baza de date trece automat la versiunea 6; backup-urile vechi se pot restaura în continuare.

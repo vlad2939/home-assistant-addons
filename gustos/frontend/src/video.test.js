@@ -28,9 +28,9 @@ describe("parseVideo", () => {
 });
 
 describe("player", () => {
-  it("YouTube fără cookie-uri, cu imagine de previzualizare", () => {
+  it("YouTube, cu imagine de previzualizare", () => {
     const v = parseVideo("https://youtu.be/HoZFE_V-11E");
-    expect(embedUrl(v)).toMatch(/^https:\/\/www\.youtube-nocookie\.com\/embed\/HoZFE_V-11E\?/);
+    expect(embedUrl(v)).toMatch(/^https:\/\/www\.youtube\.com\/embed\/HoZFE_V-11E\?/);
     expect(thumbnailUrl(v)).toBe("https://i.ytimg.com/vi/HoZFE_V-11E/hqdefault.jpg");
     expect(siteLabel(v)).toBe("YouTube");
   });
