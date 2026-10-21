@@ -7,6 +7,13 @@ const state = {
   transferFrame: 0,
 };
 const root = document.documentElement;
+const accentPalette = {
+  orange: { dark: ["#f58a2a", "#ffa044", "rgb(245 138 42 / 12%)"], light: ["#e97818", "#d9660b", "rgb(233 120 24 / 10%)"] },
+  blue: { dark: ["#83b6ff", "#a0c7ff", "rgb(103 160 239 / 14%)"], light: ["#2869c7", "#1e55a6", "rgb(40 105 199 / 10%)"] },
+  purple: { dark: ["#b49aff", "#c8b6ff", "rgb(157 123 232 / 15%)"], light: ["#7650c5", "#603bad", "rgb(118 80 197 / 10%)"] },
+  teal: { dark: ["#53c9b5", "#77dfcc", "rgb(55 176 154 / 14%)"], light: ["#148775", "#0e705f", "rgb(20 135 117 / 10%)"] },
+  rose: { dark: ["#f28ba2", "#ffa5b8", "rgb(220 89 119 / 14%)"], light: ["#c94d69", "#ad3854", "rgb(201 77 105 / 10%)"] },
+};
 
 const icons = {
   download: '<path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/>',
@@ -37,6 +44,21 @@ function setTheme(theme) {
     : '<path d="M20.4 15.2A8.4 8.4 0 0 1 8.8 3.6 8.5 8.5 0 1 0 20.4 15.2Z"/>';
   $("theme-toggle").setAttribute("aria-label", `Schimbă la tema ${theme === "dark" ? "deschisă" : "închisă"}`);
   document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#11151b" : "#f3f4f5";
+  setAccent(localStorage.getItem("file-server-accent") || "orange");
+}
+
+function setAccent(name) {
+  const accentName = accentPalette[name] ? name : "orange";
+  const colors = accentPalette[accentName][root.dataset.theme === "light" ? "light" : "dark"];
+  root.style.setProperty("--accent", colors[0]);
+  root.style.setProperty("--accent-hover", colors[1]);
+  root.style.setProperty("--accent-soft", colors[2]);
+  localStorage.setItem("file-server-accent", accentName);
+  document.querySelectorAll(".accent-choice").forEach((button) => {
+    const selected = button.dataset.accent === accentName;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
 }
 
 function toast(message, error = false) {
@@ -528,6 +550,7 @@ function closeSidebar() {
 }
 
 $("theme-toggle").addEventListener("click", () => setTheme(root.dataset.theme === "dark" ? "light" : "dark"));
+document.querySelectorAll(".accent-choice").forEach((button) => button.addEventListener("click", () => setAccent(button.dataset.accent)));
 $("refresh").addEventListener("click", () => { void navigate(); void refreshUsage(); });
 $("new-folder").addEventListener("click", createFolder);
 $("upload-files").addEventListener("click", () => $("file-input").click());
