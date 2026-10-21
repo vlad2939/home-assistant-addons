@@ -4,7 +4,7 @@ const $ = (id) => document.getElementById(id);
 const state = {
   path: "", entries: [], selected: new Set(), sort: "name", descending: false,
   view: "list", query: "", toastTimer: null, transfers: new Map(), transferId: 0,
-  transferFrame: 0, dragDepth: 0,
+  transferFrame: 0,
 };
 const root = document.documentElement;
 
@@ -32,8 +32,10 @@ function icon(name, className = "") {
 function setTheme(theme) {
   root.dataset.theme = theme;
   localStorage.setItem("file-server-theme-v2", theme);
-  $("theme-label").textContent = theme === "dark" ? "Dark" : "Light";
-  $("theme-icon").textContent = theme === "dark" ? "☾" : "☼";
+  $("theme-icon").innerHTML = theme === "dark"
+    ? '<circle cx="12" cy="12" r="3.5"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>'
+    : '<path d="M20.4 15.2A8.4 8.4 0 0 1 8.8 3.6 8.5 8.5 0 1 0 20.4 15.2Z"/>';
+  $("theme-toggle").setAttribute("aria-label", `Schimbă la tema ${theme === "dark" ? "deschisă" : "închisă"}`);
   document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#11151b" : "#f3f4f5";
 }
 
@@ -153,7 +155,11 @@ function createName(entry, rel) {
   title.type = "button";
   title.textContent = entry.name;
   title.title = entry.name;
-  title.addEventListener("click", () => entry.type === "folder" ? navigate(rel) : startDownload(rel, entry));
+  title.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : entry.name;
+  if (entry.type === "folder") {
+    title.addEventListener("dblclick", () => navigate(rel));
+    title.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
+  }
   const subtitle = document.createElement("small");
   subtitle.textContent = entry.type === "folder" ? "Folder" : fileKind(entry).toUpperCase();
   copy.append(title, subtitle);
@@ -225,7 +231,11 @@ function renderEntries() {
     cardName.className = "card-file-name";
     cardName.textContent = entry.name;
     cardName.title = entry.name;
-    cardName.addEventListener("click", () => entry.type === "folder" ? navigate(rel) : startDownload(rel, entry));
+    cardName.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : entry.name;
+    if (entry.type === "folder") {
+      cardName.addEventListener("dblclick", () => navigate(rel));
+      cardName.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
+    }
     const cardMeta = document.createElement("span");
     cardMeta.className = "card-file-meta";
     cardMeta.textContent = entry.type === "folder" ? "Folder" : `${formatSize(entry.size)} · ${kind.toUpperCase()}`;
@@ -238,7 +248,6 @@ function renderEntries() {
   $("empty-title").textContent = state.query ? "Niciun rezultat" : "Acest folder este gol";
   $("empty-copy").textContent = state.query ? "Încearcă alt termen de căutare." : "Încarcă fișiere sau creează un folder pentru a începe.";
   $("empty-upload").hidden = Boolean(state.query);
-  $("item-count").textContent = `${visible.length} ${visible.length === 1 ? "element" : "elemente"}`;
   $("nav-count").textContent = state.entries.length;
   const selected = state.selected.size;
   $("selection-bar").hidden = selected === 0;
@@ -354,9 +363,9 @@ function renderTransfers() {
     });
     top.append(copy, dismiss);
     const progress = document.createElement("div");
-    progress.className = `progress-track${item.total ? "" : " indeterminate"}`;
+    progress.className = `progress-track${item.status === "active" && !item.total ? " indeterminate" : ""}`;
     const bar = document.createElement("span");
-    bar.style.width = item.total ? `${percent}%` : "35%";
+    bar.style.width = item.total ? `${percent}%` : item.status === "done" ? "100%" : "35%";
     progress.append(bar);
     const bottom = document.createElement("div");
     bottom.className = "transfer-item-bottom";
@@ -490,17 +499,11 @@ async function startDownload(rel, entry) {
     }
     finishTransfer(item, "done");
   } catch (error) {
+    controller.abort();
     if (writable) { try { await writable.abort(); } catch {} }
     if (error.name === "AbortError") finishTransfer(item, "cancelled");
     else { finishTransfer(item, "error", error.message); toast(error.message, true); }
   }
-}
-
-function makeDropOverlay() {
-  const overlay = document.createElement("div");
-  overlay.id = "drop-overlay";
-  overlay.innerHTML = '<div class="drop-message"><span class="drop-arrow">↑</span><strong>Eliberează pentru încărcare</strong><span>Fișierele vor fi adăugate în folderul curent</span></div>';
-  $("table-scroll").append(overlay);
 }
 
 function closeSidebar() {
@@ -542,30 +545,11 @@ $("mobile-menu").addEventListener("click", () => { $("sidebar").classList.add("o
 $("sidebar-close").addEventListener("click", closeSidebar);
 $("sidebar-scrim").addEventListener("click", closeSidebar);
 document.addEventListener("keydown", (event) => {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); $("search").focus(); }
-  if (event.key === "Escape") closeSidebar();
+  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; }
 });
 
-const dropTarget = $("table-scroll");
-makeDropOverlay();
-dropTarget.addEventListener("dragenter", (event) => {
-  if (!event.dataTransfer?.types.includes("Files")) return;
-  event.preventDefault();
-  state.dragDepth += 1;
-  $("drop-overlay").classList.add("visible");
-});
-dropTarget.addEventListener("dragover", (event) => { if (event.dataTransfer?.types.includes("Files")) event.preventDefault(); });
-dropTarget.addEventListener("dragleave", (event) => {
-  event.preventDefault();
-  state.dragDepth = Math.max(0, state.dragDepth - 1);
-  if (!state.dragDepth) $("drop-overlay").classList.remove("visible");
-});
-dropTarget.addEventListener("drop", (event) => {
-  event.preventDefault();
-  state.dragDepth = 0;
-  $("drop-overlay").classList.remove("visible");
-  void uploadFiles(event.dataTransfer.files);
-});
+$("logo-open").addEventListener("click", () => { $("logo-lightbox").hidden = false; });
+$("logo-lightbox").addEventListener("click", () => { $("logo-lightbox").hidden = true; });
 
 setTheme(localStorage.getItem("file-server-theme-v2") || "dark");
 renderTransfers();

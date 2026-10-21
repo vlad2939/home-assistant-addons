@@ -13,11 +13,13 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="/" aria-label="File Server, pagina principală">
-        <img class="brand-logo" src="/logo.png" alt="">
-        <span class="brand-copy"><strong>File Server</strong><small>HOME STORAGE</small></span>
+      <div class="brand-row">
+        <button class="brand logo-trigger" id="logo-open" type="button" aria-label="Mărește logo-ul">
+          <img class="brand-logo" src="/logo.png" alt="">
+          <span class="brand-copy"><strong>File Server</strong><small>HOME STORAGE</small></span>
+        </button>
         <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Închide meniul">×</button>
-      </a>
+      </div>
 
       <div class="side-label">SPAȚIU DE LUCRU</div>
       <nav class="side-nav" aria-label="Navigare principală">
@@ -35,36 +37,25 @@
         <span class="storage-foot"><span class="online-dot"></span> Conectat</span>
       </div>
 
-      <div class="sidebar-bottom">
-        <div class="sidebar-tip"><span class="tip-icon">i</span><span>Fișierele tale rămân în rețeaua locală.</span></div>
-        <div class="user-card"><div class="user-avatar">HA</div><span><strong>Home Assistant</strong><small>Stocare personală</small></span><span class="user-menu">···</span></div>
-      </div>
+      <div class="sidebar-footer">© concept și realizare vlad39</div>
     </aside>
 
     <main class="main-panel">
       <header class="app-header">
         <button class="mobile-menu icon-button" id="mobile-menu" type="button" aria-label="Deschide meniul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-        <div class="header-context"><span class="header-kicker">SPAȚIUL TĂU</span><span class="header-title">Manager de fișiere</span></div>
+        <button class="button primary upload-main" id="upload-files" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><span>Încarcă fișiere</span></button>
         <div class="header-tools">
-          <button class="header-icon" id="transfers-toggle" type="button" title="Transferuri" aria-label="Arată transferurile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg><span class="transfer-badge" id="transfer-badge" hidden>0</span></button>
+          <button class="transfer-toggle" id="transfers-toggle" type="button" title="Arată transferurile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg><span>Transferuri</span><span class="transfer-badge" id="transfer-badge" hidden>0</span></button>
           <span class="header-divider"></span>
-          <button class="theme-switch" id="theme-toggle" type="button" aria-label="Schimbă tema"><span id="theme-icon">☾</span><span id="theme-label">Dark</span></button>
-          <div class="header-avatar" title="Home Assistant">HA</div>
+          <button class="theme-switch" id="theme-toggle" type="button" aria-label="Schimbă tema"><svg id="theme-icon" viewBox="0 0 24 24" aria-hidden="true"></svg></button>
         </div>
       </header>
 
       <div class="workspace">
-        <div class="page-intro">
-          <div><div class="eyebrow"><span class="eyebrow-dot"></span> FIȘIERELE TALE</div><h1>Fișiere</h1><p>Organizează și gestionează fișierele din spațiul tău local.</p></div>
-          <button class="button primary upload-main" id="upload-files" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><span>Încarcă fișiere</span></button>
-        </div>
-
         <div class="browser-toolbar">
           <nav id="breadcrumbs" class="breadcrumbs" aria-label="Locația curentă"></nav>
-          <div class="toolbar-tools">
-            <label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><input id="search" type="search" placeholder="Caută în acest folder" autocomplete="off"><kbd>⌘ K</kbd></label>
-            <button class="toolbar-icon" id="refresh" type="button" title="Reîncarcă" aria-label="Reîncarcă"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button>
-          </div>
+          <label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><input id="search" type="search" placeholder="Caută în acest folder" autocomplete="off"></label>
+          <button class="toolbar-icon" id="refresh" type="button" title="Reîncarcă" aria-label="Reîncarcă"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button>
         </div>
 
         <div class="actionbar">
@@ -93,15 +84,15 @@
           <div id="loading-state" class="loading-state"><span class="spinner"></span>Se încarcă fișierele…</div>
         </section>
 
-        <footer class="workspace-footer"><span id="item-count">0 elemente</span><span class="footer-location"><span class="online-dot"></span> Server local <span class="footer-sep">·</span><code>/share/file_server</code></span></footer>
       </div>
     </main>
+    <div id="sidebar-scrim" class="sidebar-scrim"></div>
   </div>
 
   <input id="file-input" type="file" multiple hidden>
   <input id="folder-input" type="file" webkitdirectory directory multiple hidden>
   <aside id="transfer-panel" class="transfer-panel" aria-label="Transferuri" hidden><div class="transfer-head"><span><strong>Transferuri</strong><small id="transfer-summary">Pregătit</small></span><button class="panel-close" id="transfer-close" type="button" aria-label="Închide panoul">×</button></div><div id="transfer-list" class="transfer-list"></div></aside>
-  <div id="sidebar-scrim" class="sidebar-scrim"></div>
+  <div id="logo-lightbox" class="logo-lightbox" role="dialog" aria-modal="true" aria-label="Logo File Server" hidden><img src="/logo.png" alt="Logo File Server"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
