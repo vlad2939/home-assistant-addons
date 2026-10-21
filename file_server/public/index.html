@@ -1,1 +1,60 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>File Server</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="File Server, pagina principală">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span><strong>File Server</strong><small>Fișierele tale, în rețeaua locală</small></span>
+      </a>
+      <button class="theme-button" id="theme-toggle" type="button" aria-label="Schimbă tema">
+        <span id="theme-icon" aria-hidden="true">☼</span><span id="theme-label">Temă deschisă</span>
+      </button>
+    </header>
 
+    <section class="toolbar" aria-label="Acțiuni fișiere">
+      <div class="actions">
+        <button class="button primary" id="upload-files" type="button"><span aria-hidden="true">↑</span> Încarcă fișiere</button>
+        <button class="button" id="upload-folder" type="button"><span aria-hidden="true">↥</span> Încarcă folder</button>
+        <button class="button" id="new-folder" type="button"><span aria-hidden="true">＋</span> Folder nou</button>
+      </div>
+      <div class="upload-status" id="upload-status" role="status" aria-live="polite"></div>
+      <input id="file-input" type="file" multiple hidden>
+      <input id="folder-input" type="file" webkitdirectory directory multiple hidden>
+    </section>
+
+    <section class="browser-card">
+      <div class="browser-heading">
+        <div>
+          <h1>Fișiere</h1>
+          <nav id="breadcrumbs" class="breadcrumbs" aria-label="Locația curentă"></nav>
+        </div>
+        <button id="refresh" class="icon-button" type="button" aria-label="Reîncarcă lista" title="Reîncarcă">⟳</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nume</th><th>Dimensiune</th><th>Modificat</th><th><span class="sr-only">Acțiuni</span></th></tr></thead>
+          <tbody id="file-list"></tbody>
+        </table>
+        <div id="empty-state" class="empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">▱</div>
+          <strong>Acest folder este gol</strong>
+          <span>Încarcă fișiere sau creează un folder pentru a începe.</span>
+        </div>
+        <div id="loading-state" class="loading-state">Se încarcă fișierele…</div>
+      </div>
+      <footer class="card-footer"><span id="item-count"> </span><span>Stocare: <code>/share/file_server</code></span></footer>
+    </section>
+    <p class="local-note"><span aria-hidden="true">●</span> Acces local în rețeaua ta</p>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
