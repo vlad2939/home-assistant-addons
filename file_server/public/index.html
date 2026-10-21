@@ -3,58 +3,105 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#11151b">
+  <meta name="description" content="Managerul de fișiere local pentru Home Assistant">
   <title>File Server</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
       <a class="brand" href="/" aria-label="File Server, pagina principală">
-        <span class="brand-mark" aria-hidden="true">F</span>
-        <span><strong>File Server</strong><small>Fișierele tale, în rețeaua locală</small></span>
+        <img class="brand-logo" src="/logo.png" alt="">
+        <span class="brand-copy"><strong>File Server</strong><small>HOME STORAGE</small></span>
+        <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Închide meniul">×</button>
       </a>
-      <button class="theme-button" id="theme-toggle" type="button" aria-label="Schimbă tema">
-        <span id="theme-icon" aria-hidden="true">☼</span><span id="theme-label">Temă deschisă</span>
-      </button>
-    </header>
 
-    <section class="toolbar" aria-label="Acțiuni fișiere">
-      <div class="actions">
-        <button class="button primary" id="upload-files" type="button"><span aria-hidden="true">↑</span> Încarcă fișiere</button>
-        <button class="button" id="upload-folder" type="button"><span aria-hidden="true">↥</span> Încarcă folder</button>
-        <button class="button" id="new-folder" type="button"><span aria-hidden="true">＋</span> Folder nou</button>
+      <div class="side-label">SPAȚIU DE LUCRU</div>
+      <nav class="side-nav" aria-label="Navigare principală">
+        <button class="nav-item active" id="all-files" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M3.5 9h17"/></svg>
+          <span>Toate fișierele</span><span class="nav-count" id="nav-count">0</span>
+        </button>
+      </nav>
+
+      <div class="side-label location-label">STOCARE</div>
+      <div class="storage-card">
+        <div class="storage-top"><span class="storage-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01M11 7.5h6M11 16.5h6"/></svg></span><span class="online-dot"></span></div>
+        <strong>Server local</strong>
+        <span class="storage-path">/share/file_server</span>
+        <span class="storage-foot"><span class="online-dot"></span> Conectat</span>
       </div>
-      <div class="upload-status" id="upload-status" role="status" aria-live="polite"></div>
-      <input id="file-input" type="file" multiple hidden>
-      <input id="folder-input" type="file" webkitdirectory directory multiple hidden>
-    </section>
 
-    <section class="browser-card">
-      <div class="browser-heading">
-        <div>
-          <h1>Fișiere</h1>
+      <div class="sidebar-bottom">
+        <div class="sidebar-tip"><span class="tip-icon">i</span><span>Fișierele tale rămân în rețeaua locală.</span></div>
+        <div class="user-card"><div class="user-avatar">HA</div><span><strong>Home Assistant</strong><small>Stocare personală</small></span><span class="user-menu">···</span></div>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="app-header">
+        <button class="mobile-menu icon-button" id="mobile-menu" type="button" aria-label="Deschide meniul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div class="header-context"><span class="header-kicker">SPAȚIUL TĂU</span><span class="header-title">Manager de fișiere</span></div>
+        <div class="header-tools">
+          <button class="header-icon" id="transfers-toggle" type="button" title="Transferuri" aria-label="Arată transferurile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg><span class="transfer-badge" id="transfer-badge" hidden>0</span></button>
+          <span class="header-divider"></span>
+          <button class="theme-switch" id="theme-toggle" type="button" aria-label="Schimbă tema"><span id="theme-icon">☾</span><span id="theme-label">Dark</span></button>
+          <div class="header-avatar" title="Home Assistant">HA</div>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <div class="page-intro">
+          <div><div class="eyebrow"><span class="eyebrow-dot"></span> FIȘIERELE TALE</div><h1>Fișiere</h1><p>Organizează și gestionează fișierele din spațiul tău local.</p></div>
+          <button class="button primary upload-main" id="upload-files" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><span>Încarcă fișiere</span></button>
+        </div>
+
+        <div class="browser-toolbar">
           <nav id="breadcrumbs" class="breadcrumbs" aria-label="Locația curentă"></nav>
+          <div class="toolbar-tools">
+            <label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><input id="search" type="search" placeholder="Caută în acest folder" autocomplete="off"><kbd>⌘ K</kbd></label>
+            <button class="toolbar-icon" id="refresh" type="button" title="Reîncarcă" aria-label="Reîncarcă"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button>
+          </div>
         </div>
-        <button id="refresh" class="icon-button" type="button" aria-label="Reîncarcă lista" title="Reîncarcă">⟳</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nume</th><th>Dimensiune</th><th>Modificat</th><th><span class="sr-only">Acțiuni</span></th></tr></thead>
-          <tbody id="file-list"></tbody>
-        </table>
-        <div id="empty-state" class="empty-state" hidden>
-          <div class="empty-icon" aria-hidden="true">▱</div>
-          <strong>Acest folder este gol</strong>
-          <span>Încarcă fișiere sau creează un folder pentru a începe.</span>
+
+        <div class="actionbar">
+          <div class="actionbar-left">
+            <button class="button secondary" id="upload-folder" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M12 12v5m-2.5-2.5h5"/></svg>Încarcă folder</button>
+            <button class="button secondary" id="new-folder" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M12 12v5m-2.5-2.5h5"/></svg>Folder nou</button>
+            <button class="button danger-button" id="delete-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Șterge selectate <span id="selected-count">0</span></button>
+          </div>
+          <div class="actionbar-right">
+            <label class="sort-control"><span>Ordonează</span><select id="sort"><option value="name">Nume</option><option value="modified">Modificat</option><option value="size">Dimensiune</option><option value="type">Tip</option></select></label>
+            <div class="view-toggle" role="group" aria-label="Mod de afișare"><button class="view-button active" id="list-view" type="button" aria-label="Vizualizare listă" title="Listă"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></button><button class="view-button" id="grid-view" type="button" aria-label="Vizualizare grilă" title="Grilă"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></button></div>
+          </div>
         </div>
-        <div id="loading-state" class="loading-state">Se încarcă fișierele…</div>
+
+        <section class="selection-bar" id="selection-bar" hidden><span><strong id="selection-label">0 selectate</strong><span class="selection-hint">Selectează elemente pentru acțiuni multiple</span></span><button class="text-button" id="clear-selection" type="button">Anulează selecția</button></section>
+
+        <section class="file-browser" aria-label="Conținut folder">
+          <div class="table-scroll" id="table-scroll">
+            <table class="file-table">
+              <thead><tr><th class="check-col"><input type="checkbox" id="select-all" aria-label="Selectează toate elementele"></th><th>Nume</th><th>Dimensiune</th><th>Tip</th><th>Ultima modificare</th><th class="table-actions-col"><span class="sr-only">Acțiuni</span></th></tr></thead>
+              <tbody id="file-list"></tbody>
+            </table>
+          </div>
+          <div class="grid-list" id="grid-list" hidden></div>
+          <div id="empty-state" class="empty-state" hidden><div class="empty-art"><svg viewBox="0 0 72 72" aria-hidden="true"><path d="M12 22a5 5 0 0 1 5-5h15l6 6h17a5 5 0 0 1 5 5v23a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5z"/><path d="M12 31h48"/></svg></div><strong id="empty-title">Acest folder este gol</strong><span id="empty-copy">Încarcă fișiere sau creează un folder pentru a începe.</span><button class="button secondary" id="empty-upload" type="button">Încarcă fișiere</button></div>
+          <div id="loading-state" class="loading-state"><span class="spinner"></span>Se încarcă fișierele…</div>
+        </section>
+
+        <footer class="workspace-footer"><span id="item-count">0 elemente</span><span class="footer-location"><span class="online-dot"></span> Server local <span class="footer-sep">·</span><code>/share/file_server</code></span></footer>
       </div>
-      <footer class="card-footer"><span id="item-count"> </span><span>Stocare: <code>/share/file_server</code></span></footer>
-    </section>
-    <p class="local-note"><span aria-hidden="true">●</span> Acces local în rețeaua ta</p>
-  </main>
+    </main>
+  </div>
+
+  <input id="file-input" type="file" multiple hidden>
+  <input id="folder-input" type="file" webkitdirectory directory multiple hidden>
+  <aside id="transfer-panel" class="transfer-panel" aria-label="Transferuri" hidden><div class="transfer-head"><span><strong>Transferuri</strong><small id="transfer-summary">Pregătit</small></span><button class="panel-close" id="transfer-close" type="button" aria-label="Închide panoul">×</button></div><div id="transfer-list" class="transfer-list"></div></aside>
+  <div id="sidebar-scrim" class="sidebar-scrim"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
