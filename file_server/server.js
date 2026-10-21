@@ -10,8 +10,32 @@ const ROOT = path.resolve(process.env.DATA_DIR || "/share/file_server");
 const PUBLIC = path.join(__dirname, "public");
 const PORT = Number(process.env.PORT || 8085);
 const MAX_BODY = 1024 * 1024;
+const MAX_STORAGE_BYTES = 15 * 1024 ** 3;
+let reservedQuotaBytes = 0;
+let quotaQueue = Promise.resolve();
 
 fs.mkdirSync(ROOT, { recursive: true });
+
+async function withQuotaLock(callback) {
+  const previous = quotaQueue;
+  let release;
+  quotaQueue = new Promise((resolve) => { release = resolve; });
+  await previous;
+  try { return await callback(); } finally { release(); }
+}
+
+async function getUsageBytes(directory = ROOT) {
+  let total = 0;
+  for (const entry of await fs.promises.readdir(directory, { withFileTypes: true })) {
+    if (/^\.upload-[a-f0-9]{16}$/.test(entry.name)) continue;
+    const full = path.join(directory, entry.name);
+    const stat = await fs.promises.lstat(full);
+    if (stat.isSymbolicLink()) continue;
+    if (stat.isDirectory()) total += await getUsageBytes(full);
+    else if (stat.isFile()) total += stat.size;
+  }
+  return total;
+}
 
 function send(res, status, body, type = "application/json; charset=utf-8") {
   const data = Buffer.from(typeof body === "string" ? body : JSON.stringify(body));
@@ -111,6 +135,11 @@ async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   try {
     if (url.pathname.startsWith("/api/")) {
+      if (req.method === "GET" && url.pathname === "/api/usage") {
+        const usedBytes = await getUsageBytes();
+        return send(res, 200, { usedBytes, limitBytes: MAX_STORAGE_BYTES, availableBytes: Math.max(0, MAX_STORAGE_BYTES - usedBytes), percent: Math.min(100, usedBytes / MAX_STORAGE_BYTES * 100) });
+      }
+
       if (req.method === "GET" && url.pathname === "/api/list") {
         const dir = relativePath(url.searchParams.get("path"));
         return send(res, 200, { path: dir, entries: await listDirectory(dir) });
@@ -132,15 +161,37 @@ async function handle(req, res) {
         if (!rel) throw Object.assign(new Error("Lipsește numele fișierului."), { status: 400 });
         const overwrite = url.searchParams.get("overwrite") === "1";
         const target = await checkedTarget(rel, { createParents: true, allowMissing: true });
+        let oldSize = 0;
         try {
           const existing = await fs.promises.lstat(target);
           if (existing.isSymbolicLink() || existing.isDirectory()) throw Object.assign(new Error("Există deja un folder cu acest nume."), { status: 409 });
           if (!overwrite) return send(res, 409, { error: "Există deja un fișier cu acest nume.", exists: true });
+          oldSize = existing.size;
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
         }
+        const contentLength = Number(req.headers["content-length"]);
+        if (!Number.isSafeInteger(contentLength) || contentLength < 0) throw Object.assign(new Error("Lipsește dimensiunea încărcării."), { status: 411 });
+        const growthBytes = Math.max(0, contentLength - oldSize);
+        await withQuotaLock(async () => {
+          const usedBytes = await getUsageBytes();
+          if (usedBytes + reservedQuotaBytes + growthBytes > MAX_STORAGE_BYTES) {
+            throw Object.assign(new Error("Limita de stocare de 15 GB ar fi depășită. Șterge fișiere pentru a elibera spațiu."), { status: 413 });
+          }
+          reservedQuotaBytes += growthBytes;
+        });
+        let reservationActive = true;
+        const releaseReservation = async () => {
+          if (!reservationActive) return;
+          await withQuotaLock(async () => {
+            if (!reservationActive) return;
+            reservedQuotaBytes -= growthBytes;
+            reservationActive = false;
+          });
+        };
         const temp = path.join(path.dirname(target), `.upload-${crypto.randomBytes(8).toString("hex")}`);
-        await new Promise((resolve, reject) => {
+        try {
+          await new Promise((resolve, reject) => {
           const output = fs.createWriteStream(temp, { flags: "wx", mode: 0o644 });
           let settled = false;
           const fail = async (error) => {
@@ -148,6 +199,7 @@ async function handle(req, res) {
             settled = true;
             output.destroy();
             await fs.promises.unlink(temp).catch(() => {});
+            await releaseReservation();
             reject(error);
           };
           req.on("aborted", () => fail(Object.assign(new Error("Încărcarea a fost anulată."), { status: 400 })));
@@ -156,11 +208,15 @@ async function handle(req, res) {
           output.on("finish", async () => {
             if (settled) return;
             try {
-              if (overwrite) await fs.promises.rename(temp, target);
-              else {
-                await fs.promises.link(temp, target);
-                await fs.promises.unlink(temp);
-              }
+              await withQuotaLock(async () => {
+                if (overwrite) await fs.promises.rename(temp, target);
+                else {
+                  await fs.promises.link(temp, target);
+                  await fs.promises.unlink(temp);
+                }
+                reservedQuotaBytes -= growthBytes;
+                reservationActive = false;
+              });
               settled = true;
               resolve();
             } catch (error) {
@@ -169,7 +225,11 @@ async function handle(req, res) {
             }
           });
           req.pipe(output);
-        });
+          });
+        } catch (error) {
+          await releaseReservation();
+          throw error;
+        }
         return send(res, 201, { ok: true });
       }
 

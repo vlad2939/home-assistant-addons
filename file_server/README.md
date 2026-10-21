@@ -22,7 +22,10 @@ Addon-ul nu solicită parolă. Orice dispozitiv care poate accesa portul `8085` 
 - teme deschisă și închisă, memorate în browser;
 - vizualizare listă sau grilă, căutare în folderul curent, sortare și ștergere multiplă;
 - progres, viteză și anulare pentru transferurile de fișiere;
+- cotă maximă de 15 GB, verificată la server, cu indicator pentru spațiul folosit și liber;
 - navigarea în foldere se face prin dublu-click; descărcarea fișierelor pornește doar din butonul de descărcare;
 - logo-ul din bara laterală se poate deschide pe tot ecranul și se închide cu `Esc` sau click.
 
 Fișierele sunt păstrate în `/share/file_server` și rămân disponibile la repornirea ori actualizarea addon-ului. Pentru depanare în afara Home Assistant, directorul poate fi suprascris prin variabila `DATA_DIR`.
+
+Limita de 15 GB se aplică totalului fișierelor obișnuite din acest director și subdirectoarele lui. Fișierele simbolice nu sunt acceptate și nu se includ în total.
