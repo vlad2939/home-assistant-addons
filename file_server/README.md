@@ -20,6 +20,7 @@ Addon-ul nu solicită parolă. Orice dispozitiv care poate accesa portul `8085` 
 - descărcare de fișiere sau foldere ca arhive ZIP;
 - ștergerea fișierelor și folderelor, cu confirmare;
 - teme deschisă și închisă, memorate în browser;
+- cinci culori de accent armonizate cu tema, cu alegerea memorată în browser;
 - vizualizare listă sau grilă, căutare în folderul curent, sortare și ștergere multiplă;
 - progres, viteză și anulare pentru transferurile de fișiere;
 - cotă maximă de 15 GB, verificată la server, cu indicator pentru spațiul folosit și liber;
