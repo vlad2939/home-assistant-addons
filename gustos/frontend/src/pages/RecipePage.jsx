@@ -12,6 +12,7 @@ import PageHeader from "../components/PageHeader.jsx";
 import RecipeVideo from "../components/RecipeVideo.jsx";
 import RecipeGallery from "../components/RecipeGallery.jsx";
 import PhotoLightbox from "../components/PhotoLightbox.jsx";
+import ShoppingPicker from "../components/ShoppingPicker.jsx";
 import CookMode from "../components/CookMode.jsx";
 import { useChecked } from "../useChecked.js";
 
@@ -193,6 +194,7 @@ export default function RecipePage() {
   const [cooking, setCooking] = useState(false);
   const [viewer, setViewer] = useState(null); // indexul pozei deschise pe tot ecranul
   const [shopping, setShopping] = useState(null); // mesajul după „Adaugă în cumpărături”
+  const [picking, setPicking] = useState(false);
   const ingredientChecks = useChecked(`gustos-ingredients-${id}`);
   const stepChecks = useChecked(`gustos-steps-${id}`);
 
@@ -238,15 +240,7 @@ export default function RecipePage() {
 
   const tagLink = (t) => `/retete?tag=${encodeURIComponent(t)}`;
 
-  const addToShopping = async () => {
-    try {
-      const r = await api.post("/api/shopping/from-recipe", { recipe_id: recipe.id, servings });
-      const forServings = servings ? ` pentru ${servings} ${servings === 1 ? "porție" : "porții"}` : "";
-      setShopping(`Am adăugat ${r.added} ${r.added === 1 ? "ingredient" : "ingrediente"}${forServings} în lista de cumpărături.`);
-    } catch (e) {
-      setShopping(e.message);
-    }
-  };
+  const addedMessage = (added) => `${added ? `Am adăugat ${added} ${added === 1 ? "produs" : "produse"}` : "Nu s-a adăugat nimic nou"} în lista de cumpărături.`;
 
   const images = [
     ...(recipe.photo ? [{ photo: recipe.photo }] : []),
@@ -348,10 +342,13 @@ export default function RecipePage() {
         <span className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={addToShopping}
+          onClick={() => {
+            setShopping(null);
+            setPicking(true);
+          }}
           disabled={!recipe.ingredients.length}
           className="flex h-12 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium hover:bg-surface-2 disabled:opacity-50"
-          title="Adaugă ingredientele, pentru porțiile alese, în lista de cumpărături"
+          title="Alege din ingrediente ce trebuie să cumperi"
         >
           <ShoppingCart size={20} aria-hidden="true" /> Adaugă în cumpărături
         </button>
@@ -417,6 +414,16 @@ export default function RecipePage() {
           onClose={() => setViewer(null)}
         />
       )}
+
+      <ShoppingPicker
+        open={picking}
+        source={{ recipe_id: recipe.id, servings }}
+        onClose={() => setPicking(false)}
+        onAdded={(added) => {
+          setPicking(false);
+          setShopping(addedMessage(added));
+        }}
+      />
 
       {cooking && (
         <CookMode

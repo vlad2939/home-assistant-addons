@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { formatQuantity, formatUnit, groupIngredients, ingredientAmount, roundForShopping, scaleQuantity } from "./scale.js";
+import { formatQuantity, formatUnit, groupIngredients, ingredientAmount, scaleQuantity } from "./scale.js";
 
 describe("scaleQuantity", () => {
   test("proporțional cu porțiile", () => {
@@ -80,12 +80,3 @@ test("groupIngredients păstrează ordinea grupurilor", () => {
   ]);
 });
 
-describe("roundForShopping", () => {
-  test("rotunjește în sus doar ce se cumpără la bucată", () => {
-    expect(roundForShopping({ quantity: 1 / 3, unit: null }).quantity).toBe(1);
-    expect(roundForShopping({ quantity: 2.5, unit: "cățel" }).quantity).toBe(3);
-    expect(roundForShopping({ quantity: 2.004, unit: "bucată" }).quantity).toBe(2);
-    expect(roundForShopping({ quantity: 165, unit: "g" }).quantity).toBe(165);
-    expect(roundForShopping({ quantity: null, quantity_text: "un praf" }).quantity_text).toBe("un praf");
-  });
-});

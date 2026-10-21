@@ -8,7 +8,7 @@ Layout: TopBar (logo clickabil, titlul „Gustos” cu efect shimmer, Acasă, Re
 Import în engleză: unități metrice + „Tradu în română” (services/translate.py: OPUS-MT local prin CTranslate2 sau DeepL; model în /data/models).
 Regulă UI: tot ce modifică (poze, poza principală, traducere, marcaje, rețetele unui meniu) se face doar în paginile de editare; paginile de vizualizare rămân doar pentru citit (excepție: ♥ și Șterge).
 Meniu (v2): /meniu, săptămână (zile × mese) sau eveniment (pe feluri), tabelele menus / menu_items.
-Cumpărături (v2): /cumparaturi, o listă comună (shopping_items), adunare pe denumire + unitate, raioane în services/shopping.py.
+Cumpărături (2.1): /cumparaturi, listă simplă (shopping_list: denumire + cantitate liberă), fără raioane/bife; din rețetă sau meniu se alege în ShoppingPicker ce se cumpără; Copiază lista (text) și PDF.
 Pagina rețetei: video (YouTube / Vimeo, încărcat la click) și modul „Gătesc acum” (ecran mereu aprins: Wake Lock sau clipul mut din public/keep-awake.*).
 Modale (ESC și click închid, fundal blurat în ton cu tema): logo lightbox fără text, manual_utilizare.md, Despre.
 Teme: dark/light + 5 culori de accent (portocaliu implicit), prin variabile CSS.

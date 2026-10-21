@@ -1,192 +1,218 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Check, FileText, Plus, ShoppingCart, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Check, ClipboardCopy, FileText, Pencil, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { api } from "../api.js";
-import { ingredientAmount, roundForShopping } from "../scale.js";
+import { shortDate } from "../menu.js";
 import PageHeader from "../components/PageHeader.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import { IconButton, TextInput } from "../components/form/fields.jsx";
 
-const REFRESH_MS = 15000; // lista e comună: ce bifează altcineva apare și aici
+/** Textul listei, pentru „Copiază lista” (de lipit pe telefon, în WhatsApp sau Notițe). */
+export function listAsText(items) {
+  return [`Cumpărături ${shortDate(new Date())}`, ...items.map((i) => `- ${i.name}${i.amount ? ` – ${i.amount}` : ""}`)].join("\n");
+}
 
-function Row({ item, onToggle, onDelete }) {
-  const amount = ingredientAmount(roundForShopping(item), null, null);
+/** Copiere în clipboard; pe http:// (fără HTTPS) browserul nu oferă navigator.clipboard, deci se folosește varianta veche. */
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // de exemplu fereastra nu are focus: încercăm varianta veche
+    }
+  }
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+  document.body.appendChild(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  area.remove();
+  if (!ok) throw new Error("Browserul nu a permis copierea.");
+}
+
+function Row({ item, onSave, onDelete }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(item.name);
+  const [amount, setAmount] = useState(item.amount ?? "");
+
+  const cancel = () => {
+    setEditing(false);
+    setName(item.name);
+    setAmount(item.amount ?? "");
+  };
+  const save = async () => {
+    if (await onSave(item, { name, amount })) setEditing(false);
+  };
+  const keys = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    } else if (e.key === "Escape") {
+      e.stopPropagation();
+      cancel();
+    }
+  };
+
+  if (editing) {
+    return (
+      <li className="flex flex-wrap items-center gap-2 py-2">
+        <TextInput value={name} onChange={(e) => setName(e.target.value)} onKeyDown={keys} autoFocus aria-label="Produsul" className="min-w-0 flex-[3]" />
+        <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} onKeyDown={keys} placeholder="cantitate" aria-label="Cantitatea" className="min-w-0 flex-1" />
+        <IconButton label="Salvează" onClick={save}>
+          <Check size={18} />
+        </IconButton>
+        <IconButton label="Renunță" onClick={cancel}>
+          <X size={18} />
+        </IconButton>
+      </li>
+    );
+  }
   return (
-    <li className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={() => onToggle(item)}
-        aria-pressed={item.checked}
-        className={`flex min-w-0 flex-1 items-start gap-3 rounded-2xl px-2 py-3 text-left transition-colors hover:bg-surface-2 ${item.checked ? "opacity-55" : ""}`}
-      >
-        <span
-          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 ${
-            item.checked ? "border-accent bg-accent text-on-accent" : "border-border"
-          }`}
-          aria-hidden="true"
-        >
-          {item.checked && <Check size={16} strokeWidth={3} />}
-        </span>
-        <span className={`min-w-0 ${item.checked ? "line-through" : ""}`}>
-          <span className="text-[17px]">
-            {amount && <span className="font-semibold tabular-nums">{amount} </span>}
-            {item.name}
-            {item.note && <span className="text-muted">, {item.note}</span>}
-          </span>
-          {item.sources && <span className="block truncate text-sm text-muted">din {item.sources}</span>}
-        </span>
-      </button>
-      <button
-        type="button"
-        onClick={() => onDelete(item)}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-[var(--accent-red)]"
-        aria-label={`Scoate ${item.name} din listă`}
-      >
+    <li className="flex items-center gap-2 py-1.5">
+      <span className="min-w-0 flex-1 py-1.5 text-[17px]">
+        {item.name}
+        {item.amount && <span className="text-muted"> – {item.amount}</span>}
+      </span>
+      <IconButton label={`Modifică ${item.name}`} onClick={() => setEditing(true)}>
+        <Pencil size={18} />
+      </IconButton>
+      <IconButton label={`Scoate ${item.name} din listă`} onClick={() => onDelete(item)} className="hover:text-[var(--accent-red)]">
         <X size={18} />
-      </button>
+      </IconButton>
     </li>
   );
 }
 
 export default function ShoppingPage() {
-  const notice = useLocation().state?.notice;
   const [items, setItems] = useState(null);
-  const [text, setText] = useState("");
-  const [error, setError] = useState(null);
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [message, setMessage] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  const run = useCallback(async (request) => {
-    setError(null);
-    try {
-      setItems((await request()).items);
-      return true;
-    } catch (e) {
-      setError(e.message);
-      return false;
-    }
+  useEffect(() => {
+    api.get("/api/shopping").then((r) => setItems(r.items)).catch((e) => setMessage({ kind: "error", text: e.message }));
   }, []);
 
-  const reload = useCallback(() => api.get("/api/shopping").then((r) => setItems(r.items)).catch(() => {}), []);
-
-  useEffect(() => {
-    reload();
-    const timer = setInterval(() => document.visibilityState === "visible" && reload(), REFRESH_MS);
-    const onVisible = () => document.visibilityState === "visible" && reload();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [reload]);
+  const run = async (request) => {
+    setMessage(null);
+    try {
+      const r = await request();
+      setItems(r.items);
+      return r;
+    } catch (e) {
+      setMessage({ kind: "error", text: e.message });
+      return null;
+    }
+  };
 
   const add = async (e) => {
     e.preventDefault();
-    if (text.trim() && (await run(() => api.post("/api/shopping/items", { text })))) setText("");
+    if (!name.trim()) return;
+    const r = await run(() => api.post("/api/shopping/items", { items: [{ name, amount }] }));
+    if (!r) return;
+    if (r.added === 0) setMessage({ kind: "info", text: `„${name.trim()}” este deja în listă.` });
+    setName("");
+    setAmount("");
   };
 
-  const toggle = (item) => {
-    setItems((list) => list.map((i) => (i.id === item.id ? { ...i, checked: !i.checked } : i))); // imediat, apoi serverul
-    run(() => api.patch(`/api/shopping/items/${item.id}`, { checked: !item.checked }));
+  const copy = async () => {
+    try {
+      await copyText(listAsText(items));
+      setMessage({ kind: "ok", text: "Lista a fost copiată. O poți lipi într-un mesaj sau în Notițe." });
+    } catch (e) {
+      setMessage({ kind: "error", text: e.message });
+    }
   };
 
-  if (!items) return <p className="text-muted">Se încarcă…</p>;
+  if (!items) return message ? <p className="text-[var(--accent-red)]">{message.text}</p> : <p className="text-muted">Se încarcă…</p>;
 
-  const todo = items.filter((i) => !i.checked);
-  const done = items.filter((i) => i.checked);
-  const aisles = [...new Set(todo.map((i) => i.aisle))];
+  const button = "flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium hover:bg-surface-2";
+  const colors = { error: "var(--accent-red)", ok: "var(--accent-green)", info: "var(--border)" };
 
   return (
     <>
-      <PageHeader title="Cumpărături" subtitle={todo.length ? `${todo.length} de cumpărat` : "Nimic de cumpărat"}>
+      <PageHeader title="Cumpărături" subtitle={items.length ? `${items.length} ${items.length === 1 ? "produs" : "produse"}` : "Lista e goală"}>
         {items.length > 0 && (
-          <span className="flex gap-2">
-          <Link
-            to="/tipar/cumparaturi"
-            className="flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium hover:bg-surface-2"
-            title="Lista (fără produsele bifate) ca PDF sau la imprimantă"
-          >
-            <FileText size={18} aria-hidden="true" /> PDF
-          </Link>
-          <button
-            type="button"
-            onClick={() => setConfirmClear(true)}
-            className="flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium text-[var(--accent-red)] hover:bg-surface-2"
-          >
-            <Trash2 size={18} aria-hidden="true" /> Golește lista
-          </button>
+          <span className="flex flex-wrap gap-2">
+            <button type="button" onClick={copy} className={button} title="Copiază lista ca text, ca s-o lipești pe telefon">
+              <ClipboardCopy size={18} aria-hidden="true" /> Copiază lista
+            </button>
+            <Link to="/tipar/cumparaturi" className={button} title="Lista ca PDF sau la imprimantă">
+              <FileText size={18} aria-hidden="true" /> PDF
+            </Link>
+            <button type="button" onClick={() => setConfirmClear(true)} className={`${button} text-[var(--accent-red)]`}>
+              <Trash2 size={18} aria-hidden="true" /> Golește lista
+            </button>
           </span>
         )}
       </PageHeader>
 
-      {notice && <p className="mb-5 rounded-2xl border border-[var(--accent-green)] bg-surface p-4">{notice}</p>}
+      <div className="max-w-3xl">
+        <form onSubmit={add} className="mb-4 flex gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Produs, de exemplu „ulei” sau „detergent”"
+            aria-label="Produs nou"
+            className="h-14 min-w-0 flex-[3] rounded-2xl border border-border bg-surface px-4 text-lg outline-none placeholder:text-muted focus:border-accent"
+          />
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="cantitate"
+            aria-label="Cantitatea"
+            className="h-14 min-w-0 flex-1 rounded-2xl border border-border bg-surface px-4 text-lg outline-none placeholder:text-muted focus:border-accent"
+          />
+          <button type="submit" disabled={!name.trim()} className="flex h-14 items-center gap-2 rounded-2xl bg-accent px-5 font-semibold text-on-accent disabled:opacity-50">
+            <Plus size={20} aria-hidden="true" /> Adaugă
+          </button>
+        </form>
 
-      <form onSubmit={add} className="mb-6 flex gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Adaugă un produs, de exemplu „2 kg cartofi” sau „detergent”"
-          aria-label="Produs nou"
-          className="h-14 min-w-0 flex-1 rounded-2xl border border-border bg-surface px-4 text-lg outline-none placeholder:text-muted focus:border-accent"
-        />
-        <button type="submit" disabled={!text.trim()} className="flex h-14 items-center gap-2 rounded-2xl bg-accent px-5 font-semibold text-on-accent disabled:opacity-50">
-          <Plus size={20} aria-hidden="true" /> <span className="hidden sm:inline">Adaugă</span>
-        </button>
-      </form>
-      {error && <p className="mb-4 text-[var(--accent-red)]" role="alert">{error}</p>}
+        {message && (
+          <p className="mb-4 rounded-2xl border bg-surface px-4 py-3" style={{ borderColor: colors[message.kind] }} role={message.kind === "error" ? "alert" : "status"}>
+            {message.text}
+          </p>
+        )}
 
-      {items.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border p-10 text-center text-muted">
-          <ShoppingCart size={40} className="text-accent" aria-hidden="true" />
-          <p>Lista e goală. Adaugă produse aici, ingredientele unei rețete (butonul de pe pagina rețetei) sau un meniu întreg.</p>
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {aisles.map((aisle) => (
-          <section key={aisle} className="rounded-3xl border border-border bg-surface p-4 shadow-card">
-            <h2 className="mb-1 px-2 text-lg font-semibold">{aisle}</h2>
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border p-10 text-center text-muted">
+            <ShoppingCart size={40} className="text-accent" aria-hidden="true" />
+            <p>
+              Lista e goală. Scrie produsele aici sau alege-le din ingredientele unei rețete sau ale unui meniu (butonul „Adaugă în cumpărături”).
+            </p>
+          </div>
+        ) : (
+          <section className="rounded-3xl border border-border bg-surface px-5 py-2 shadow-card">
             <ul className="divide-y divide-border">
-              {todo
-                .filter((i) => i.aisle === aisle)
-                .map((item) => (
-                  <Row key={item.id} item={item} onToggle={toggle} onDelete={(i) => run(() => api.del(`/api/shopping/items/${i.id}`))} />
-                ))}
+              {items.map((item) => (
+                <Row
+                  key={`${item.id}-${item.name}-${item.amount}`}
+                  item={item}
+                  onSave={(i, change) => run(() => api.put(`/api/shopping/items/${i.id}`, change)).then(Boolean)}
+                  onDelete={(i) => run(() => api.del(`/api/shopping/items/${i.id}`))}
+                />
+              ))}
             </ul>
           </section>
-        ))}
+        )}
       </div>
-
-      {done.length > 0 && (
-        <section className="mt-6 rounded-3xl border border-border bg-surface p-4 shadow-card">
-          <div className="mb-1 flex items-center justify-between gap-3 px-2">
-            <h2 className="text-lg font-semibold">În coș ({done.length})</h2>
-            <button
-              type="button"
-              onClick={() => run(() => api.post("/api/shopping/clear", { only_checked: true }))}
-              className="text-sm font-medium text-accent hover:underline"
-            >
-              Scoate din listă ce e bifat
-            </button>
-          </div>
-          <ul className="divide-y divide-border">
-            {done.map((item) => (
-              <Row key={item.id} item={item} onToggle={toggle} onDelete={(i) => run(() => api.del(`/api/shopping/items/${i.id}`))} />
-            ))}
-          </ul>
-        </section>
-      )}
 
       <ConfirmDialog
         open={confirmClear}
         onClose={() => setConfirmClear(false)}
         onConfirm={async () => {
-          await run(() => api.post("/api/shopping/clear", { only_checked: false }));
+          await run(() => api.post("/api/shopping/clear"));
           setConfirmClear(false);
         }}
         title="Golești lista de cumpărături?"
         confirmLabel="Golește lista"
         danger
       >
-        <p>Se șterg toate produsele din listă ({items.length}), inclusiv cele nebifate.</p>
+        <p>Se șterg toate produsele din listă ({items.length}).</p>
       </ConfirmDialog>
     </>
   );

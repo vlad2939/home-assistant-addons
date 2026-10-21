@@ -61,15 +61,14 @@ Din **Meniu** (bara de sus) planifici mesele.
 
 ## Cumpărături
 
-O singură listă, aceeași pe toate dispozitivele (o completezi pe PC, o bifezi pe telefon în magazin).
+O listă simplă de produse, pe care o pregătești acasă și o iei la magazin tipărită sau pe telefon.
 
-- **Din rețetă**: pe pagina rețetei alegi porțiile, apoi **Adaugă în cumpărături**.
-- **Din meniu**: pe pagina meniului, **Listă de cumpărături** adaugă ingredientele tuturor rețetelor, cu porțiile din meniu.
-- **De mână**: scrie în câmpul de sus, de exemplu „2 kg cartofi” sau „detergent”, și apasă **Adaugă**.
-- Ingredientele identice se adună (500 g + 0,5 kg făină = 1 kg). Produsele sunt grupate pe raioane: legume și fructe, carne și pește, lactate și ouă, panificație, băcănie, condimente, altele. Sub fiecare produs scrie din ce rețete vine.
-- Produsele care se cumpără la bucată se rotunjesc în sus (din porții poate ieși „⅓ ou”, dar pe listă apare „1 ou”).
-- Atinge un produs ca să-l bifezi: trece la **În coș**. **Scoate din listă ce e bifat** curăță lista după cumpărături, iar **Golește lista** le șterge pe toate. ✕ scoate un singur produs.
-- Lista se actualizează singură la câteva secunde, dacă altcineva o modifică de pe alt dispozitiv.
+- **Din rețetă**: pe pagina rețetei, **Adaugă în cumpărături** deschide ingredientele. Bifează doar ce trebuie să cumperi (de exemplu nu și sarea). Cantitatea din rețetă se vede doar ca ajutor; în listă intră numai denumirea.
+- **Din meniu**: pe pagina meniului, **Adaugă în cumpărături** arată ingredientele tuturor rețetelor, fiecare o singură dată.
+- **De mână**: scrie produsul și, dacă vrei, cantitatea („2 kg”, „1 pachet”), apoi **Adaugă**.
+- Un produs care e deja în listă nu se adaugă a doua oară (în fereastra de alegere apare „deja în listă”).
+- ✎ lângă un produs îl modifică (denumire, sort, cantitate); ✕ îl scoate din listă. **Golește lista** le șterge pe toate.
+- **Copiază lista** o copiază ca text: o lipești pe telefon într-un mesaj (de exemplu WhatsApp) sau în Notițe. **PDF** o tipărește, cu căsuțe de bifat pe hârtie.
 
 ## PDF și tipărire
 
@@ -82,7 +81,7 @@ Butonul **PDF** există pe pagina rețetei, pe pagina unui meniu și în **Cump�
 Bine de știut:
 
 - Rețeta se tipărește cu porțiile alese pe pagină: dacă ai pus 8 porții, cantitățile sunt pentru 8.
-- La lista de cumpărături se tipăresc doar produsele nebifate, pe raioane, cu căsuțe de bifat pe hârtie.
+- Lista de cumpărături se tipărește pe două coloane, cu căsuțe de bifat pe hârtie.
 - Pe tabletă: meniul ⋮ al Chrome → **Distribuie** / **Tipărește** dacă fereastra nu apare singură.
 
 ## Adăugarea și editarea unei rețete

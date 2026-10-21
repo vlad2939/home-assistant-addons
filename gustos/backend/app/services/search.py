@@ -86,7 +86,7 @@ def list_recipes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
 
     sql = f"""
         SELECT r.id, r.title, r.description, r.photo, r.prep_time, r.cook_time, r.servings,
-               r.favorite, r.own, r.category_id, c.name AS category_name, r.source_site,
+               r.favorite, r.own, r.video_url IS NOT NULL AS has_video, r.category_id, c.name AS category_name, r.source_site,
                r.created_at, r.updated_at
         FROM recipes r {joins}
         LEFT JOIN categories c ON c.id = r.category_id
@@ -98,6 +98,7 @@ def list_recipes(conn: sqlite3.Connection, f: Filters) -> list[dict]:
     for item in items:
         item["favorite"] = bool(item["favorite"])
         item["own"] = bool(item["own"])
+        item["has_video"] = bool(item["has_video"])
         item["total_time"] = total_time(item["prep_time"], item["cook_time"])
         item["tags"] = tags.get(item["id"], [])
     return items

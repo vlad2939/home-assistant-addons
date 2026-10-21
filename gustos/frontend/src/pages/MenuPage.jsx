@@ -6,6 +6,7 @@ import { formatMinutes } from "../format.js";
 import { COURSES, DAYS, MEALS, addDays, longDate, menuTitle, parseDate, peopleCount, recipeCount, shortDate, toIso } from "../menu.js";
 import PageHeader from "../components/PageHeader.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import ShoppingPicker from "../components/ShoppingPicker.jsx";
 import { OwnBadge, RecipePhoto } from "../components/RecipeCard.jsx";
 
 const button = "flex h-11 items-center gap-2 rounded-2xl border border-border bg-surface px-4 font-medium hover:bg-surface-2";
@@ -104,6 +105,7 @@ export default function MenuPage() {
   const [error, setError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [copyError, setCopyError] = useState(null);
+  const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     setMenu(null);
@@ -124,14 +126,20 @@ export default function MenuPage() {
 
   const isWeek = menu.kind === "week";
 
-  const toShopping = async () => {
+  const toShopping = () => {
     setCopyError(null);
-    try {
-      const r = await api.post("/api/shopping/from-menu", { menu_id: menu.id });
-      navigate("/cumparaturi", { state: { notice: `Am adăugat ingredientele din „${menuTitle(menu)}”: ${r.added} ingrediente, cele identice adunate.` } });
-    } catch (e) {
-      setCopyError(e.message);
-    }
+    setPicking(true);
+  };
+  const onAdded = (added) => {
+    setPicking(false);
+    setCopyError(
+      <>
+        {added ? `Am adăugat ${added} ${added === 1 ? "produs" : "produse"}` : "Nu s-a adăugat nimic nou"} în lista de cumpărături.{" "}
+        <Link to="/cumparaturi" className="font-medium text-accent hover:underline">
+          Vezi lista
+        </Link>
+      </>,
+    );
   };
 
   // „Copiază în săptămâna următoare”: dacă există deja, se deschide meniul acela
@@ -164,8 +172,8 @@ export default function MenuPage() {
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           {menu.items.length > 0 && (
-            <button type="button" onClick={toShopping} className={button} title="Adaugă ingredientele tuturor rețetelor din meniu">
-              <ShoppingCart size={18} aria-hidden="true" /> Listă de cumpărături
+            <button type="button" onClick={toShopping} className={button} title="Alege din ingredientele rețetelor din meniu ce trebuie să cumperi">
+              <ShoppingCart size={18} aria-hidden="true" /> Adaugă în cumpărături
             </button>
           )}
           {isWeek && (
@@ -194,6 +202,8 @@ export default function MenuPage() {
       {menu.notes && <p className="mb-6 whitespace-pre-line rounded-3xl border border-border bg-surface p-5 leading-relaxed">{menu.notes}</p>}
 
       {isWeek ? <WeekView menu={menu} /> : <EventView menu={menu} />}
+
+      <ShoppingPicker open={picking} source={{ menu_id: menu.id }} onClose={() => setPicking(false)} onAdded={onAdded} />
 
       <ConfirmDialog
         open={confirmDelete}

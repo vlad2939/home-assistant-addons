@@ -1,5 +1,10 @@
 # Istoric versiuni
 
+## 2.1.0 – 21.10.2026
+
+- **Cumpărături, refăcută**: o listă simplă de produse, fiecare cu o cantitate scrisă liber („2 kg”, „1 pachet”), fără raioane, bife sau calcule la gram. Din rețetă sau din meniu se deschide o fereastră în care bifezi doar ce cumperi (cantitatea din rețetă apare doar ca ajutor). Fiecare produs se poate modifica sau șterge. **Copiază lista** o copiază ca text pentru telefon; **PDF** o tipărește pe două coloane. Produsele nebifate din lista veche se păstrează.
+- Cardurile rețetelor (Acasă, Rețete) arată sursa (de exemplu jamilacuisine.ro), jos în dreapta, și eticheta **Video** la rețetele cu clip.
+
 ## 2.0.1 – 20.10.2026
 
 - Video: clipurile YouTube se redau prin playerul oficial YouTube. Dacă autorul unui clip nu permite redarea în afara YouTube pe tabletă (codul 150, de exemplu la clipurile cu promovare plătită), Gustos afișează explicația în locul ecranului gri „Videoclipul nu este disponibil”. Clipurile fără această restricție merg și pe tabletă.

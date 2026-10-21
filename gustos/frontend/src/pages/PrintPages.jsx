@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import { formatMinutes, photoUrl } from "../format.js";
-import { groupIngredients, ingredientAmount, roundForShopping } from "../scale.js";
+import { groupIngredients, ingredientAmount } from "../scale.js";
 import { COURSES, DAYS, MEALS, addDays, longDate, menuTitle, parseDate, peopleCount, shortDate, toIso } from "../menu.js";
 import PrintLayout from "../components/PrintLayout.jsx";
 
@@ -210,43 +210,29 @@ export function PrintMenu() {
 export function PrintShopping() {
   const [data, error] = useLoad("/api/shopping");
   if (error) return <Failed message={error} />;
-  const items = data?.items.filter((i) => !i.checked) ?? [];
-  const aisles = [...new Set(items.map((i) => i.aisle))];
+  const items = data?.items ?? [];
   const today = new Date();
 
   return (
     <PrintLayout title={`Cumpărături ${shortDate(today)}`} ready={Boolean(data)}>
       {data && (
-        <div className="text-[11pt] leading-snug">
+        <div className="text-[12pt] leading-snug">
           <h1 className="text-[20pt] font-bold">Cumpărături</h1>
           <p className={`mt-1 ${MUTED}`}>
             {longDate(toIso(today))} · {items.length} {items.length === 1 ? "produs" : "produse"}
           </p>
           {items.length === 0 && <p className="mt-4">Lista e goală.</p>}
-          <div className="mt-5 columns-2 gap-8">
-            {aisles.map((aisle) => (
-              <section key={aisle} className="print-keep mb-4">
-                <h2 className={`mb-1.5 border-b ${RULE} pb-1 text-[12pt] font-bold`}>{aisle}</h2>
-                <ul className="space-y-1.5">
-                  {items
-                    .filter((i) => i.aisle === aisle)
-                    .map((i) => {
-                      const amount = ingredientAmount(roundForShopping(i), null, null);
-                      return (
-                        <li key={i.id} className="flex gap-2">
-                          <Box />
-                          <span>
-                            {amount && <strong>{amount} </strong>}
-                            {i.name}
-                            {i.note && <span className={MUTED}>, {i.note}</span>}
-                          </span>
-                        </li>
-                      );
-                    })}
-                </ul>
-              </section>
+          <ul className="mt-5 columns-2 gap-10">
+            {items.map((i) => (
+              <li key={i.id} className="print-keep mb-2 flex gap-2.5">
+                <Box />
+                <span>
+                  {i.name}
+                  {i.amount && <span className={MUTED}> – {i.amount}</span>}
+                </span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
     </PrintLayout>
