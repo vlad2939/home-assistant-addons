@@ -186,10 +186,15 @@ async function handle(req, res) {
             "X-Content-Type-Options": "nosniff",
           });
           const zip = spawn("zip", ["-r", "-", "."], { cwd: target, stdio: ["ignore", "pipe", "pipe"] });
-          zip.stdout.pipe(res);
+          zip.stdout.pipe(res, { end: false });
           zip.stderr.on("data", (chunk) => console.error("zip:", chunk.toString().trim()));
           zip.on("error", (error) => { if (!res.headersSent) send(res, 500, { error: "Nu s-a putut crea arhiva ZIP." }); else res.destroy(error); });
-          zip.on("close", (code) => { if (code !== 0 && !res.destroyed) res.destroy(new Error(`zip exited ${code}`)); });
+          zip.on("close", (code) => {
+            if (res.destroyed) return;
+            if (code === 0) res.end();
+            else res.destroy(new Error(`zip exited ${code}`));
+          });
+          res.on("close", () => { if (!res.writableEnded && !zip.killed) zip.kill("SIGTERM"); });
           return;
         }
         res.writeHead(200, {

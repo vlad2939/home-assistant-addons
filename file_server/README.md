@@ -19,9 +19,10 @@ Addon-ul nu solicită parolă. Orice dispozitiv care poate accesa portul `8085` 
 - creare de foldere;
 - descărcare de fișiere sau foldere ca arhive ZIP;
 - ștergerea fișierelor și folderelor, cu confirmare;
-- teme deschisă și închisă, memorate în browser.
+- teme deschisă și închisă, memorate în browser;
 - vizualizare listă sau grilă, căutare în folderul curent, sortare și ștergere multiplă;
 - progres, viteză și anulare pentru transferurile de fișiere;
-- încărcare prin tragere și plasare.
+- navigarea în foldere se face prin dublu-click; descărcarea fișierelor pornește doar din butonul de descărcare;
+- logo-ul din bara laterală se poate deschide pe tot ecranul și se închide cu `Esc` sau click.
 
 Fișierele sunt păstrate în `/share/file_server` și rămân disponibile la repornirea ori actualizarea addon-ului. Pentru depanare în afara Home Assistant, directorul poate fi suprascris prin variabila `DATA_DIR`.
