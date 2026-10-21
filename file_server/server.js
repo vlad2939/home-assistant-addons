@@ -13,6 +13,7 @@ const MAX_BODY = 1024 * 1024;
 const MAX_STORAGE_BYTES = 15 * 1024 ** 3;
 let reservedQuotaBytes = 0;
 let quotaQueue = Promise.resolve();
+let mutationQueue = Promise.resolve();
 
 fs.mkdirSync(ROOT, { recursive: true });
 
@@ -20,6 +21,14 @@ async function withQuotaLock(callback) {
   const previous = quotaQueue;
   let release;
   quotaQueue = new Promise((resolve) => { release = resolve; });
+  await previous;
+  try { return await callback(); } finally { release(); }
+}
+
+async function withMutationLock(callback) {
+  const previous = mutationQueue;
+  let release;
+  mutationQueue = new Promise((resolve) => { release = resolve; });
   await previous;
   try { return await callback(); } finally { release(); }
 }
@@ -126,9 +135,39 @@ async function listDirectory(rel) {
   return result;
 }
 
+async function listFolders(directory = "", folders = []) {
+  const target = await checkedTarget(directory);
+  const entries = await fs.promises.readdir(target, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.isSymbolicLink() || /^\.upload-[a-f0-9]{16}$/.test(entry.name)) continue;
+    const rel = [directory, entry.name].filter(Boolean).join("/");
+    folders.push({ path: rel, name: entry.name });
+    await listFolders(rel, folders);
+  }
+  return folders;
+}
+
 function encodeDisposition(name) {
   const fallback = name.replace(/[\r\n"\\]/g, "_");
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
+}
+
+function streamZip(res, cwd, entries, archiveName) {
+  res.writeHead(200, {
+    "Content-Type": "application/zip",
+    "Content-Disposition": encodeDisposition(archiveName),
+    "X-Content-Type-Options": "nosniff",
+  });
+  const zip = spawn("zip", ["-r", "-", "--", ...entries], { cwd, stdio: ["ignore", "pipe", "pipe"] });
+  zip.stdout.pipe(res, { end: false });
+  zip.stderr.on("data", (chunk) => console.error("zip:", chunk.toString().trim()));
+  zip.on("error", (error) => { if (!res.headersSent) send(res, 500, { error: "Nu s-a putut crea arhiva ZIP." }); else res.destroy(error); });
+  zip.on("close", (code) => {
+    if (res.destroyed) return;
+    if (code === 0) res.end();
+    else res.destroy(new Error(`zip exited ${code}`));
+  });
+  res.on("close", () => { if (!res.writableEnded && !zip.killed) zip.kill("SIGTERM"); });
 }
 
 async function handle(req, res) {
@@ -145,6 +184,57 @@ async function handle(req, res) {
         return send(res, 200, { path: dir, entries: await listDirectory(dir) });
       }
 
+      if (req.method === "GET" && url.pathname === "/api/folders") {
+        return send(res, 200, { folders: await listFolders() });
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/move") {
+        const body = await readJson(req);
+        const sources = [...new Set((Array.isArray(body.sources) ? body.sources : []).map(relativePath))];
+        const destination = relativePath(body.destination);
+        if (!sources.length || sources.some((source) => !source)) throw Object.assign(new Error("Selectează cel puțin un element de mutat."), { status: 400 });
+        const movedCount = await withMutationLock(async () => {
+          const destinationPath = await checkedTarget(destination);
+          if (!(await fs.promises.stat(destinationPath)).isDirectory()) throw Object.assign(new Error("Destinația nu este un folder."), { status: 400 });
+          const moves = [];
+          const targetNames = new Set();
+          for (const source of sources) {
+            if (destination === source || destination.startsWith(`${source}/`)) throw Object.assign(new Error("Un folder nu poate fi mutat în interiorul lui."), { status: 400 });
+            const sourcePath = await checkedTarget(source);
+            const name = path.posix.basename(source);
+            if (path.posix.dirname(source) === (destination || ".")) throw Object.assign(new Error(`„${name}” se află deja în folderul ales.`), { status: 400 });
+            if (targetNames.has(name)) throw Object.assign(new Error(`Mai multe elemente selectate au numele „${name}”.`), { status: 409 });
+            targetNames.add(name);
+            const target = path.join(destinationPath, name);
+            try {
+              await fs.promises.lstat(target);
+              throw Object.assign(new Error(`Destinația conține deja „${name}”.`), { status: 409 });
+            } catch (error) { if (error.code !== "ENOENT") throw error; }
+            moves.push({ sourcePath, target });
+          }
+          const moved = [];
+          try {
+            for (const move of moves) {
+              await fs.promises.rename(move.sourcePath, move.target);
+              moved.push(move);
+            }
+          } catch (error) {
+            for (const move of moved.reverse()) await fs.promises.rename(move.target, move.sourcePath).catch(() => {});
+            throw error;
+          }
+          return moves.length;
+        });
+        return send(res, 200, { ok: true, moved: movedCount });
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/download-selected") {
+        const body = await readJson(req);
+        const paths = [...new Set((Array.isArray(body.paths) ? body.paths : []).map(relativePath))];
+        if (!paths.length || paths.some((item) => !item)) throw Object.assign(new Error("Selectează fișiere sau foldere pentru descărcare."), { status: 400 });
+        for (const item of paths) await checkedTarget(item);
+        return streamZip(res, ROOT, paths, "fisiere-selectate.zip");
+      }
+
       if (req.method === "POST" && url.pathname === "/api/folders") {
         const body = await readJson(req);
         const parent = relativePath(body.path);
@@ -152,7 +242,7 @@ async function handle(req, res) {
         const parentPath = await checkedTarget(parent);
         if (!(await fs.promises.stat(parentPath)).isDirectory()) throw Object.assign(new Error("Calea nu este un folder."), { status: 400 });
         const rel = [parent, name].filter(Boolean).join("/");
-        await fs.promises.mkdir(absolutePath(rel));
+        await withMutationLock(() => fs.promises.mkdir(absolutePath(rel)));
         return send(res, 201, { ok: true });
       }
 
@@ -208,15 +298,15 @@ async function handle(req, res) {
           output.on("finish", async () => {
             if (settled) return;
             try {
-              await withQuotaLock(async () => {
-                if (overwrite) await fs.promises.rename(temp, target);
-                else {
-                  await fs.promises.link(temp, target);
-                  await fs.promises.unlink(temp);
-                }
-                reservedQuotaBytes -= growthBytes;
-                reservationActive = false;
-              });
+              await withMutationLock(() => withQuotaLock(async () => {
+                  if (overwrite) await fs.promises.rename(temp, target);
+                  else {
+                    await fs.promises.link(temp, target);
+                    await fs.promises.unlink(temp);
+                  }
+                  reservedQuotaBytes -= growthBytes;
+                  reservationActive = false;
+                }));
               settled = true;
               resolve();
             } catch (error) {
@@ -240,22 +330,7 @@ async function handle(req, res) {
         const stat = await fs.promises.stat(target);
         const name = path.posix.basename(rel);
         if (stat.isDirectory()) {
-          res.writeHead(200, {
-            "Content-Type": "application/zip",
-            "Content-Disposition": encodeDisposition(`${name}.zip`),
-            "X-Content-Type-Options": "nosniff",
-          });
-          const zip = spawn("zip", ["-r", "-", "."], { cwd: target, stdio: ["ignore", "pipe", "pipe"] });
-          zip.stdout.pipe(res, { end: false });
-          zip.stderr.on("data", (chunk) => console.error("zip:", chunk.toString().trim()));
-          zip.on("error", (error) => { if (!res.headersSent) send(res, 500, { error: "Nu s-a putut crea arhiva ZIP." }); else res.destroy(error); });
-          zip.on("close", (code) => {
-            if (res.destroyed) return;
-            if (code === 0) res.end();
-            else res.destroy(new Error(`zip exited ${code}`));
-          });
-          res.on("close", () => { if (!res.writableEnded && !zip.killed) zip.kill("SIGTERM"); });
-          return;
+          return streamZip(res, target, ["."], `${name}.zip`);
         }
         res.writeHead(200, {
           "Content-Type": "application/octet-stream",
@@ -270,7 +345,7 @@ async function handle(req, res) {
         const rel = relativePath(url.searchParams.get("path"));
         if (!rel) throw Object.assign(new Error("Folderul rădăcină nu poate fi șters."), { status: 400 });
         const target = await checkedTarget(rel);
-        await fs.promises.rm(target, { recursive: true, force: false });
+        await withMutationLock(() => fs.promises.rm(target, { recursive: true, force: false }));
         return send(res, 200, { ok: true });
       }
 
