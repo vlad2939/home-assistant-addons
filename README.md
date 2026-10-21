@@ -48,6 +48,7 @@ https://github.com/vlad2939/home-assistant-addons
 | MyTube Playlist | `mytubeplaylist-addon` | `mytubeplaylist` | `2.0.0` | Da | `3000` | Stabil |
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.4` | Da | `3000` | Stabil |
 | MyTube Dash | `mytubedash-addon` | `mytubedash` | `2.0.6` | Da | `3000` | Stabil |
+| Gustos | `gustos` | `gustos` | `2.0.1` | Nu | `8099` | Stabil |
 
 Legendă:
 
@@ -181,6 +182,22 @@ Detalii:
 - port intern: `3000`;
 - fișiere principale: `index.html`, `style.css`, `app.js`.
 
+### Gustos
+
+Aplicație web pentru organizarea rețetelor culinare, cu import și traducere de rețete, meniuri săptămânale, listă de cumpărături și funcții de backup și restaurare. Interfața se accesează în rețeaua locală prin portul mapat.
+
+Detalii:
+
+- folder: `gustos`;
+- slug: `gustos`;
+- versiune: `2.0.1`;
+- ingress: inactiv;
+- port intern: `8099`;
+- port extern implicit: `8099`;
+- date persistente: `/data` (baza SQLite, poze și backup-uri);
+- watchdog: verifică endpoint-ul `/api/health`;
+- fișiere principale: `backend/app/`, `frontend/`, `config.yaml`, `Dockerfile`, `run.sh`.
+
 ## Structura Repository-ului
 
 ```text
@@ -227,6 +244,12 @@ home-assistant-addons/
   mytubedash-addon/
     config.yaml
     Dockerfile
+    ...
+
+  gustos/
+    config.yaml
+    Dockerfile
+    README.md
     ...
 ```
 
@@ -336,6 +359,7 @@ Pentru acest repository, testarea manuală principală ar trebui să acopere:
 - `car-cost-dashboard` cu date persistente în `/data/car-cost-dashboard`;
 - `home-cost-dashboard` cu baza `database.json`;
 - `yt-downloader-addon` cu descărcare reală de test.
+- `gustos` cu rețete și poze persistente după restart, acces pe portul `8099` și backup/restaurare.
 
 ## Note Importante
 
