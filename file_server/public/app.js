@@ -71,6 +71,19 @@ function formatSize(bytes) {
   return `${new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 1 }).format(value)} ${units[unit]}`;
 }
 
+async function refreshUsage() {
+  try {
+    const usage = await api("/api/usage");
+    const percent = Math.min(100, Math.max(0, usage.percent));
+    $("quota-used").textContent = `${formatSize(usage.usedBytes)} / ${formatSize(usage.limitBytes)}`;
+    $("quota-free").textContent = `${formatSize(usage.availableBytes)} liberi`;
+    $("quota-bar").style.width = `${percent}%`;
+    $("quota-track").setAttribute("aria-valuenow", String(Math.round(percent)));
+    $("quota-track").classList.toggle("warning", percent >= 80 && percent < 100);
+    $("quota-track").classList.toggle("full", percent >= 100);
+  } catch (error) { console.error("Nu s-a putut citi spațiul de stocare:", error); }
+}
+
 function formatRate(bytes, elapsed) {
   if (!elapsed || bytes <= 0) return "Se pregătește…";
   return `${formatSize(bytes / elapsed)} / s`;
@@ -293,6 +306,7 @@ async function remove(rel, entry) {
     state.selected.delete(rel);
     toast("Elementul a fost șters.");
     await navigate();
+    await refreshUsage();
   } catch (error) { toast(error.message, true); }
 }
 
@@ -306,6 +320,7 @@ async function deleteSelected() {
   }
   toast(`${removed} ${removed === 1 ? "element șters" : "elemente șterse"}.`);
   await navigate();
+  await refreshUsage();
 }
 
 function transferItem(kind, name, total = 0) {
@@ -443,6 +458,7 @@ async function uploadFiles(fileList, folderSelection = false) {
   }
   if (done) toast(`${done} ${done === 1 ? "fișier încărcat" : "fișiere încărcate"}.`);
   await navigate();
+  await refreshUsage();
 }
 
 function filenameFromResponse(response, fallback) {
@@ -512,7 +528,7 @@ function closeSidebar() {
 }
 
 $("theme-toggle").addEventListener("click", () => setTheme(root.dataset.theme === "dark" ? "light" : "dark"));
-$("refresh").addEventListener("click", () => navigate());
+$("refresh").addEventListener("click", () => { void navigate(); void refreshUsage(); });
 $("new-folder").addEventListener("click", createFolder);
 $("upload-files").addEventListener("click", () => $("file-input").click());
 $("upload-folder").addEventListener("click", () => $("folder-input").click());
@@ -554,3 +570,4 @@ $("logo-lightbox").addEventListener("click", () => { $("logo-lightbox").hidden =
 setTheme(localStorage.getItem("file-server-theme-v2") || "dark");
 renderTransfers();
 navigate("");
+refreshUsage();
