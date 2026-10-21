@@ -286,6 +286,8 @@ function renderEntries() {
   $("nav-count").textContent = state.entries.length;
   const selected = state.selected.size;
   $("selection-bar").hidden = selected === 0;
+  $("download-selected").hidden = selected === 0;
+  $("move-selected").hidden = selected === 0;
   $("delete-selected").hidden = selected === 0;
   $("selected-count").textContent = selected;
   $("selection-label").textContent = `${selected} ${selected === 1 ? "element selectat" : "elemente selectate"}`;
@@ -343,6 +345,51 @@ async function deleteSelected() {
   toast(`${removed} ${removed === 1 ? "element șters" : "elemente șterse"}.`);
   await navigate();
   await refreshUsage();
+}
+
+function closeMoveDialog() { $("move-dialog").hidden = true; }
+
+async function openMoveDialog() {
+  const selected = [...state.selected];
+  const selectedEntries = selected.map((rel) => ({ rel, entry: state.entries.find((item) => pathFor(item.name) === rel) })).filter((item) => item.entry);
+  const result = await api("/api/folders");
+  const select = $("move-destination");
+  select.replaceChildren();
+  const candidates = [{ path: "", name: "Rădăcină / Fișiere" }, ...result.folders]
+    .filter((folder) => folder.path !== state.path)
+    .filter((folder) => !selectedEntries.some(({ entry }) => entry.type === "folder" && (folder.path === pathFor(entry.name) || folder.path.startsWith(`${pathFor(entry.name)}/`))))
+    .sort((a, b) => (a.path ? 1 : -1) - (b.path ? 1 : -1) || a.path.localeCompare(b.path, "ro", { sensitivity: "base" }));
+  for (const folder of candidates) {
+    const option = document.createElement("option");
+    option.value = folder.path;
+    const depth = folder.path ? folder.path.split("/").length : 0;
+    option.textContent = `${"　".repeat(depth)}${folder.path ? folder.name : folder.name}`;
+    select.append(option);
+  }
+  $("move-description").textContent = `${selected.length} ${selected.length === 1 ? "element selectat" : "elemente selectate"}. Alege folderul de destinație.`;
+  $("move-confirm").disabled = candidates.length === 0;
+  if (!candidates.length) {
+    const option = document.createElement("option");
+    option.textContent = "Nu există alt folder disponibil";
+    option.value = "";
+    select.append(option);
+  }
+  $("move-dialog").hidden = false;
+  select.focus();
+}
+
+async function moveSelected() {
+  const sources = [...state.selected];
+  if (!sources.length) return;
+  try {
+    const result = await api("/api/move", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sources, destination: $("move-destination").value }),
+    });
+    closeMoveDialog();
+    toast(`${result.moved} ${result.moved === 1 ? "element mutat" : "elemente mutate"}.`);
+    await navigate();
+  } catch (error) { toast(error.message, true); }
 }
 
 function transferItem(kind, name, total = 0) {
@@ -491,25 +538,24 @@ function filenameFromResponse(response, fallback) {
   return plain ? plain[1] : fallback;
 }
 
-async function startDownload(rel, entry) {
-  const suggestedName = entry.type === "folder" ? `${entry.name}.zip` : entry.name;
+async function downloadRequest(request, suggestedName, fallbackSize = 0) {
   let fileHandle = null;
   if (window.showSaveFilePicker) {
     try { fileHandle = await window.showSaveFilePicker({ suggestedName }); }
     catch (error) { if (error.name === "AbortError") return; }
   }
-  const item = transferItem("download", suggestedName, entry.size || 0);
+  const item = transferItem("download", suggestedName, fallbackSize);
   const controller = new AbortController();
   item.cancel = () => controller.abort();
   let writable = null;
   try {
-    const response = await fetch(`/api/download?path=${encodeURIComponent(rel)}`, { signal: controller.signal });
+    const response = await request(controller.signal);
     if (!response.ok) {
       let message = `Eroare HTTP ${response.status}`;
       try { message = (await response.json()).error || message; } catch {}
       throw new Error(message);
     }
-    const total = Number(response.headers.get("content-length")) || entry.size || 0;
+    const total = Number(response.headers.get("content-length")) || fallbackSize || 0;
     item.total = total;
     const filename = filenameFromResponse(response, suggestedName);
     if (fileHandle) writable = await fileHandle.createWritable();
@@ -544,6 +590,20 @@ async function startDownload(rel, entry) {
   }
 }
 
+async function startDownload(rel, entry) {
+  const suggestedName = entry.type === "folder" ? `${entry.name}.zip` : entry.name;
+  await downloadRequest((signal) => fetch(`/api/download?path=${encodeURIComponent(rel)}`, { signal }), suggestedName, entry.size || 0);
+}
+
+async function downloadSelected() {
+  const paths = [...state.selected];
+  if (!paths.length) return;
+  await downloadRequest((signal) => fetch("/api/download-selected", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ paths }), signal,
+  }), "fisiere-selectate.zip");
+}
+
 function closeSidebar() {
   $("sidebar").classList.remove("open");
   $("sidebar-scrim").classList.remove("visible");
@@ -569,6 +629,11 @@ $("select-all").addEventListener("change", (event) => {
   renderEntries();
 });
 $("delete-selected").addEventListener("click", deleteSelected);
+$("download-selected").addEventListener("click", downloadSelected);
+$("move-selected").addEventListener("click", () => { void openMoveDialog().catch((error) => toast(error.message, true)); });
+$("move-cancel").addEventListener("click", closeMoveDialog);
+$("move-confirm").addEventListener("click", moveSelected);
+$("move-dialog").addEventListener("click", (event) => { if (event.target === $("move-dialog")) closeMoveDialog(); });
 $("clear-selection").addEventListener("click", () => { state.selected.clear(); renderEntries(); });
 $("list-view").addEventListener("click", () => {
   state.view = "list"; $("table-scroll").hidden = false; $("grid-list").hidden = true;
@@ -584,7 +649,7 @@ $("mobile-menu").addEventListener("click", () => { $("sidebar").classList.add("o
 $("sidebar-close").addEventListener("click", closeSidebar);
 $("sidebar-scrim").addEventListener("click", closeSidebar);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; }
+  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; closeMoveDialog(); }
 });
 
 $("logo-open").addEventListener("click", () => { $("logo-lightbox").hidden = false; });

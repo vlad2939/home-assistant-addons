@@ -227,6 +227,14 @@ tr:hover .row-actions, .file-card:hover .row-actions { opacity: 1; }
 .toast { position: fixed; z-index: 50; left: 50%; bottom: 20px; max-width: min(400px, calc(100vw - 30px)); padding: 11px 15px; transform: translate(-50%, 10px); border: 1px solid var(--line); border-radius: 8px; background: var(--sidebar); box-shadow: var(--shadow); color: var(--text); font-size: 11px; opacity: 0; pointer-events: none; transition: .18s; }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 .toast.error { border-color: color-mix(in srgb, var(--danger) 55%, var(--line)); }
+.dialog-backdrop { position: fixed; z-index: 42; inset: 0; display: grid; place-items: center; padding: 18px; background: rgb(0 0 0 / 52%); backdrop-filter: blur(5px); }
+.move-dialog { width: min(390px, 100%); padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--sidebar); box-shadow: var(--shadow); }
+.move-dialog h2 { margin: 0; color: var(--text); font-size: 16px; font-weight: 650; }
+.move-dialog p { margin: 7px 0 18px; color: var(--muted); font-size: 11px; }
+.move-dialog label { display: block; margin-bottom: 6px; color: var(--subtle); font-size: 10px; }
+.move-dialog select { width: 100%; min-height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; outline-color: var(--accent); background: var(--panel); color: var(--text); font-size: 11px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.dialog-actions .button.primary:disabled { cursor: not-allowed; opacity: .5; }
 .sidebar-scrim { display: none; }
 .logo-lightbox { position: fixed; z-index: 45; inset: 0; display: grid; place-items: center; padding: 5vh 5vw; background: color-mix(in srgb, var(--app) 73%, transparent); backdrop-filter: blur(18px) saturate(.75); cursor: zoom-out; }
 .logo-lightbox img { display: block; width: min(80vw, 80vh); height: min(80vw, 80vh); object-fit: contain; }
@@ -265,9 +273,9 @@ tr:hover .row-actions, .file-card:hover .row-actions { opacity: 1; }
   .search-box { width: min(175px, 43vw); height: 30px; gap: 5px; padding: 0 6px; }
   .search-box input { font-size: 9px; }
   .toolbar-icon { width: 30px; height: 30px; }
-  .actionbar { min-height: 47px; gap: 5px; }
-  .actionbar-left { gap: 5px; }
-  .actionbar-right { gap: 5px; }
+  .actionbar { min-height: 47px; flex-wrap: wrap; gap: 5px; padding: 5px 0; }
+  .actionbar-left { flex-wrap: wrap; gap: 5px; }
+  .actionbar-right { gap: 5px; margin-left: auto; }
   .button { min-height: 32px; gap: 5px; padding: 0 8px; font-size: 9px; }
   .button svg { width: 13px; height: 13px; }
   .sort-control > span { display: none; }
