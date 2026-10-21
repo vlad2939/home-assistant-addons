@@ -1030,5 +1030,17 @@
     "kmSinceLastFill": 687.0,
     "consumptionPer100Km": 5.39,
     "notes": ""
+  },
+  {
+    "id": "fuel_1792606075730_uiswgw",
+    "date": "2026-10-21",
+    "station": "Rompetrol",
+    "costLei": 378.49,
+    "priceLeiPerLiter": 10.12,
+    "liters": 37.0,
+    "odometerKm": 53043.0,
+    "kmSinceLastFill": 602.0,
+    "consumptionPer100Km": 6.15,
+    "notes": ""
   }
 ]

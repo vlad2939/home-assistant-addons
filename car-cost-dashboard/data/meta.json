@@ -3,7 +3,5 @@
   "initialCostLei": null,
   "acquisitionAdjustmentLei": null,
   "currency": "lei",
-  "importedAt": "2026-05-14T01:03:49",
-  "sourceFile": "COSTURI i20.xlsx",
-  "totalExpensesLei": 37414
+  "totalExpensesLei": 37414.0
 }
