@@ -5,6 +5,7 @@ RUN apk add --no-cache nodejs zip
 
 WORKDIR /app
 COPY server.js ./server.js
+COPY logo.png ./logo.png
 COPY public ./public
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh

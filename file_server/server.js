@@ -3,6 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
+const crypto = require("node:crypto");
 const { spawn } = require("node:child_process");
 
 const ROOT = path.resolve(process.env.DATA_DIR || "/share/file_server");
@@ -87,7 +88,7 @@ async function listDirectory(rel) {
   const stat = await fs.promises.stat(target);
   if (!stat.isDirectory()) throw Object.assign(new Error("Calea nu este un folder."), { status: 400 });
   const entries = await fs.promises.readdir(target, { withFileTypes: true });
-  const result = await Promise.all(entries.filter((entry) => !entry.isSymbolicLink()).map(async (entry) => {
+  const result = await Promise.all(entries.filter((entry) => !entry.isSymbolicLink() && !/^\.upload-[a-f0-9]{16}$/.test(entry.name)).map(async (entry) => {
     const full = path.join(target, entry.name);
     const itemStat = await fs.promises.stat(full);
     return {
@@ -138,12 +139,36 @@ async function handle(req, res) {
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
         }
+        const temp = path.join(path.dirname(target), `.upload-${crypto.randomBytes(8).toString("hex")}`);
         await new Promise((resolve, reject) => {
-          const output = fs.createWriteStream(target, { flags: overwrite ? "w" : "wx", mode: 0o644 });
+          const output = fs.createWriteStream(temp, { flags: "wx", mode: 0o644 });
+          let settled = false;
+          const fail = async (error) => {
+            if (settled) return;
+            settled = true;
+            output.destroy();
+            await fs.promises.unlink(temp).catch(() => {});
+            reject(error);
+          };
+          req.on("aborted", () => fail(Object.assign(new Error("Încărcarea a fost anulată."), { status: 400 })));
+          req.on("error", fail);
+          output.on("error", fail);
+          output.on("finish", async () => {
+            if (settled) return;
+            try {
+              if (overwrite) await fs.promises.rename(temp, target);
+              else {
+                await fs.promises.link(temp, target);
+                await fs.promises.unlink(temp);
+              }
+              settled = true;
+              resolve();
+            } catch (error) {
+              if (error.code === "EEXIST") error.status = 409;
+              await fail(error);
+            }
+          });
           req.pipe(output);
-          output.on("finish", resolve);
-          output.on("error", reject);
-          req.on("error", reject);
         });
         return send(res, 201, { ok: true });
       }
@@ -189,11 +214,12 @@ async function handle(req, res) {
 
     if (req.method !== "GET" && req.method !== "HEAD") return send(res, 405, "Metodă nepermisă.", "text/plain; charset=utf-8");
     const pathname = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname);
-    const file = path.resolve(PUBLIC, `.${pathname}`);
-    if (!file.startsWith(PUBLIC + path.sep)) return send(res, 404, "Nu a fost găsit.", "text/plain; charset=utf-8");
+    const relative = pathname.replace(/^\/+/, "");
+    const file = relative === "logo.png" ? path.join(__dirname, "logo.png") : path.resolve(PUBLIC, `.${pathname}`);
+    if (relative !== "logo.png" && !file.startsWith(PUBLIC + path.sep)) return send(res, 404, "Nu a fost găsit.", "text/plain; charset=utf-8");
     const stat = await fs.promises.stat(file).catch(() => null);
     if (!stat || !stat.isFile()) return send(res, 404, "Nu a fost găsit.", "text/plain; charset=utf-8");
-    const types = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml" };
+    const types = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png" };
     res.writeHead(200, { "Content-Type": types[path.extname(file)] || "application/octet-stream", "Content-Length": stat.size, "X-Content-Type-Options": "nosniff", "Cache-Control": "no-cache" });
     if (req.method === "HEAD") return res.end();
     return fs.createReadStream(file).pipe(res);
@@ -204,6 +230,9 @@ async function handle(req, res) {
   }
 }
 
-http.createServer(handle).listen(PORT, "0.0.0.0", () => {
+const server = http.createServer(handle);
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`File Server ascultă pe portul ${PORT}; fișierele sunt în ${ROOT}`);
 });
+
+module.exports = server;
