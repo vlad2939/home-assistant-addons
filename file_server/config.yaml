@@ -1,1 +1,19 @@
-
+name: "File Server"
+version: "1.0.0"
+slug: "file_server"
+description: "Server de fișiere local cu interfață web pentru încărcare, descărcare și organizare."
+url: "https://github.com/vlad2939/home-assistant-addons/tree/main/file_server"
+arch:
+  - amd64
+startup: services
+boot: auto
+init: false
+ports:
+  8085/tcp: 8085
+ports_description:
+  8085/tcp: "Interfața web File Server în rețeaua locală"
+webui: "http://[HOST]:[PORT:8085]"
+map:
+  - share:rw
+options: {}
+schema: {}
