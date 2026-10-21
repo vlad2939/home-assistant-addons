@@ -1146,9 +1146,20 @@ function showChartTooltip(event, canvas) {
   if (!hit) return hideChartTooltip();
 
   tooltip.innerHTML = `<strong>${escapeHtml(hit.title)}</strong><span>${escapeHtml(hit.value)}</span>`;
-  tooltip.style.left = `${event.clientX + 14}px`;
-  tooltip.style.top  = `${event.clientY + 14}px`;
   tooltip.classList.add("show");
+
+  // Afișăm tooltip-ul lângă cursor, dar îl păstrăm în interiorul viewport-ului.
+  const gap = 14;
+  const bounds = tooltip.getBoundingClientRect();
+  const left = event.clientX + bounds.width + gap <= window.innerWidth
+    ? event.clientX + gap
+    : event.clientX - bounds.width - gap;
+  const top = event.clientY + bounds.height + gap <= window.innerHeight
+    ? event.clientY + gap
+    : event.clientY - bounds.height - gap;
+
+  tooltip.style.left = `${Math.max(0, Math.min(left, window.innerWidth - bounds.width))}px`;
+  tooltip.style.top  = `${Math.max(0, Math.min(top, window.innerHeight - bounds.height))}px`;
 }
 
 /** Ascunde tooltip-ul eliminând clasa .show. */
