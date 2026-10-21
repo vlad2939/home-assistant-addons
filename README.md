@@ -49,6 +49,7 @@ https://github.com/vlad2939/home-assistant-addons
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.4` | Da | `3000` | Stabil |
 | MyTube Dash | `mytubedash-addon` | `mytubedash` | `2.0.6` | Da | `3000` | Stabil |
 | Gustos | `gustos` | `gustos` | `2.0.1` | Nu | `8099` | Stabil |
+| File Server | `file_server` | `file_server` | `1.0.0` | Nu | `8085` | Nou |
 
 Legendă:
 
@@ -197,6 +198,21 @@ Detalii:
 - date persistente: `/data` (baza SQLite, poze și backup-uri);
 - watchdog: verifică endpoint-ul `/api/health`;
 - fișiere principale: `backend/app/`, `frontend/`, `config.yaml`, `Dockerfile`, `run.sh`.
+
+### File Server
+
+Server de fișiere local cu interfață web pentru navigare, încărcare, descărcare și ștergere de fișiere și foldere.
+
+Detalii:
+
+- folder: `file_server`;
+- slug: `file_server`;
+- versiune: `1.0.0`;
+- acces: direct din browser pe IP-ul Home Assistant și portul `8085`;
+- folder de date: `/share/file_server`;
+- fișiere principale: `server.js`, `public/`, `config.yaml`, `Dockerfile`, `run.sh`.
+
+Adresa de acces în rețeaua locală: `http://IP-UL-HOME-ASSISTANT:8085`.
 
 ## Structura Repository-ului
 
