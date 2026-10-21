@@ -40,7 +40,7 @@ https://github.com/vlad2939/home-assistant-addons
 
 | Add-on | Folder | Slug | Versiune | Ingress | Port intern | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| Car Cost Dashboard | `car-cost-dashboard` | `car_cost_dashboard` | `1.5.7` | Da | `3000` | Stabil |
+| Car Cost Dashboard | `car-cost-dashboard` | `car_cost_dashboard` | `1.5.8` | Da | `3000` | Stabil |
 | Home Cost Dashboard | `home-cost-dashboard` | `homecost` | `2026.8.0` | Da | `3000` | Stabil |
 | TubeDash | `tubedash-addon` | `tubedash` | `5.0.6` | Da | `3000` | Stabil |
 | Full Web Server | `ha-webserver` | `full_web_server` | `1.0.4` | Da | `80` | Stabil |
