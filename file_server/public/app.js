@@ -5,7 +5,8 @@ const state = {
   path: "", entries: [], selected: new Set(), sort: "name", descending: false,
   view: "list", query: "", toastTimer: null, transfers: new Map(), transferId: 0,
   transferFrame: 0,
-  previewItem: null, mediaPlaylist: [], mediaIndex: -1, imageZoom: 1, imageRotation: 0,
+  previewItem: null, audioItem: null, mediaPlaylist: [], mediaIndex: -1,
+  imagePlaylist: [], imageIndex: -1, imageZoom: 1, imageRotation: 0,
   playAllActive: false,
 };
 const root = document.documentElement;
@@ -150,10 +151,17 @@ function openPreview(rel, entry, keepPlaylist = false) {
   const item = { ...entry, path: rel, kind };
   if (!keepPlaylist) {
     state.playAllActive = false;
-    state.mediaPlaylist = state.entries
-      .filter((candidate) => candidate.type !== "folder" && ["audio", "video"].includes(previewType(candidate.name)))
-      .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: previewType(candidate.name) }));
-    state.mediaIndex = state.mediaPlaylist.findIndex((candidate) => candidate.path === rel);
+    if (kind === "image") {
+      state.imagePlaylist = visibleEntries()
+        .filter((candidate) => candidate.type !== "folder" && previewType(candidate.name) === "image")
+        .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: "image" }));
+      state.imageIndex = state.imagePlaylist.findIndex((candidate) => candidate.path === rel);
+    } else if (["audio", "video"].includes(kind)) {
+      state.mediaPlaylist = visibleEntries()
+        .filter((candidate) => candidate.type !== "folder" && ["audio", "video"].includes(previewType(candidate.name)))
+        .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: previewType(candidate.name) }));
+      state.mediaIndex = state.mediaPlaylist.findIndex((candidate) => candidate.path === rel);
+    }
   }
   showPreview(item);
 }
@@ -166,14 +174,17 @@ function showPreview(item) {
   const pdf = $("preview-pdf");
   const text = $("preview-text");
   state.previewItem = item;
-  $("mini-audio-player").hidden = true;
+  if (item.kind === "audio") state.audioItem = item;
+  const audioIsPlaying = !audio.paused && Boolean(audio.currentSrc);
+  $("mini-audio-player").hidden = item.kind === "audio" || !audioIsPlaying;
   $("preview-filename").textContent = item.name;
   $("preview-kind").textContent = ({ image: "Imagine", video: "Video", audio: "Audio", pdf: "Document PDF", text: "Text / cod" })[item.kind] || "Previzualizare";
   $("preview-download").href = `/api/download?path=${encodeURIComponent(item.path)}`;
   $("preview-download").download = item.name;
+  const hasImageQueue = item.kind === "image" && state.imagePlaylist.length > 1;
   const hasMediaQueue = ["audio", "video"].includes(item.kind) && state.mediaPlaylist.length > 1;
-  $("preview-previous").hidden = !hasMediaQueue;
-  $("preview-next").hidden = !hasMediaQueue;
+  $("preview-previous").hidden = !(hasImageQueue || hasMediaQueue);
+  $("preview-next").hidden = !(hasImageQueue || hasMediaQueue);
   $("image-controls").hidden = item.kind !== "image";
   for (const element of [image, video, pdf, text]) element.hidden = true;
   if (item.kind !== "audio") audio.hidden = true;
@@ -233,12 +244,18 @@ function closePreview() {
   const audioIsPlaying = !audio.paused;
   audio.hidden = true;
   if (audioIsPlaying) {
-    $("mini-audio-title").textContent = state.previewItem?.name || "Redare audio";
+    $("mini-audio-title").textContent = state.audioItem?.name || "Redare audio";
     $("mini-audio-player").hidden = false;
   }
 }
 
 function stepMedia(direction) {
+  if (state.previewItem?.kind === "image") {
+    if (state.imagePlaylist.length < 2) return;
+    state.imageIndex = (state.imageIndex + direction + state.imagePlaylist.length) % state.imagePlaylist.length;
+    showPreview(state.imagePlaylist[state.imageIndex]);
+    return;
+  }
   if (state.mediaPlaylist.length < 2) return;
   state.mediaIndex = (state.mediaIndex + direction + state.mediaPlaylist.length) % state.mediaPlaylist.length;
   showPreview(state.mediaPlaylist[state.mediaIndex]);
@@ -842,8 +859,8 @@ $("mini-audio-play").addEventListener("click", () => {
   if (audio.paused) audio.play().catch(() => {}); else audio.pause();
 });
 $("mini-audio-open").addEventListener("click", () => {
-  if (!state.previewItem || state.previewItem.kind !== "audio") return;
-  showPreview(state.previewItem);
+  if (!state.audioItem) return;
+  openPreview(state.audioItem.path, state.audioItem);
 });
 $("mini-audio-close").addEventListener("click", () => {
   const audio = $("preview-audio");
