@@ -191,7 +191,7 @@ async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   try {
     if (url.pathname.startsWith("/api/")) {
-      if (req.method === "GET" && url.pathname === "/api/preview") {
+      if (["GET", "HEAD"].includes(req.method) && url.pathname === "/api/preview") {
         const rel = relativePath(url.searchParams.get("path"));
         if (!rel) throw Object.assign(new Error("Selectează un fișier pentru previzualizare."), { status: 400 });
         const extension = path.posix.extname(rel).slice(1).toLowerCase();
@@ -204,14 +204,45 @@ async function handle(req, res) {
         const headers = {
           "Content-Type": contentType,
           "Content-Length": stat.size,
+          "Accept-Ranges": "bytes",
           "Content-Disposition": `inline; ${encodeDisposition(name).slice("attachment; ".length)}`,
           "X-Content-Type-Options": "nosniff",
           "Cache-Control": "no-store",
         };
         if (["svg", "html", "htm"].includes(extension)) headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'";
-        res.writeHead(200, headers);
+        let start = 0;
+        let end = stat.size - 1;
+        let status = 200;
+        const range = req.headers.range;
+        if (range) {
+          const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+          if (!match || stat.size === 0 || (!match[1] && !match[2])) {
+            res.writeHead(416, { "Content-Range": `bytes */${stat.size}`, "Accept-Ranges": "bytes", "Cache-Control": "no-store" });
+            return res.end();
+          }
+          if (!match[1]) {
+            const suffixLength = Number(match[2]);
+            if (!Number.isSafeInteger(suffixLength) || suffixLength < 1) {
+              res.writeHead(416, { "Content-Range": `bytes */${stat.size}`, "Accept-Ranges": "bytes", "Cache-Control": "no-store" });
+              return res.end();
+            }
+            start = Math.max(0, stat.size - suffixLength);
+          } else {
+            start = Number(match[1]);
+            if (!Number.isSafeInteger(start)) start = stat.size;
+          }
+          if (match[2] && match[1]) end = Math.min(Number(match[2]), stat.size - 1);
+          if (start >= stat.size || end < start || !Number.isSafeInteger(end)) {
+            res.writeHead(416, { "Content-Range": `bytes */${stat.size}`, "Accept-Ranges": "bytes", "Cache-Control": "no-store" });
+            return res.end();
+          }
+          status = 206;
+          headers["Content-Length"] = end - start + 1;
+          headers["Content-Range"] = `bytes ${start}-${end}/${stat.size}`;
+        }
+        res.writeHead(status, headers);
         if (req.method === "HEAD") return res.end();
-        return fs.createReadStream(target).pipe(res);
+        return fs.createReadStream(target, range ? { start, end } : undefined).pipe(res);
       }
 
       if (req.method === "GET" && url.pathname === "/api/usage") {

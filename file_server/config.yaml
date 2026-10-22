@@ -1,5 +1,5 @@
 name: "File Server"
-version: "1.7.0"
+version: "1.8.0"
 slug: "file_server"
 description: "Server de fișiere local cu interfață web pentru încărcare, descărcare și organizare."
 url: "https://github.com/vlad2939/home-assistant-addons/tree/main/file_server"
@@ -18,4 +18,4 @@ map:
 options: {}
 schema: {}
 backup_exclude:
-  - "file_server/*"
+  - "share/file_server/*"

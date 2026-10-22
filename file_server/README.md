@@ -26,8 +26,10 @@ Addon-ul nu solicită parolă. Orice dispozitiv care poate accesa portul `8085` 
 - vizualizare listă sau grilă, căutare în folderul curent, sortare și ștergere multiplă;
 - progres, viteză și anulare pentru transferurile de fișiere;
 - cotă maximă de 15 GB, verificată la server, cu indicator pentru spațiul folosit și liber;
-- folderele se deschid la dublu-click; fișierele acceptate de Chrome se previzualizează la dublu-click, iar celelalte se descarcă din butonul dedicat;
-- previzualizare în Chrome pentru PDF, imagini, audio, video și fișiere text/cod uzuale; arhivele nu se deschid la dublu-click;
+- folderele se deschid la dublu-click; fișierele compatibile se previzualizează în aplicație, iar celelalte rămân disponibile prin butonul de descărcare;
+- preview pentru PDF, imagini, audio, video și fișiere text/cod uzuale; imaginile au zoom și rotire, audio/video au controale de redare, iar audio poate continua în mini-player;
+- navigare înainte/înapoi în lista media a folderului și redarea consecutivă a elementelor cu butonul „Redă media”;
+- previzualizare PDF încorporată și afișare text sigură pentru HTML, cod și documente text; arhivele nu se deschid la dublu-click;
 - logo-ul din bara laterală se poate deschide pe tot ecranul și se închide cu `Esc` sau click.
 
 Fișierele sunt păstrate în `/share/file_server` și rămân disponibile la repornirea ori actualizarea addon-ului. Pentru depanare în afara Home Assistant, directorul poate fi suprascris prin variabila `DATA_DIR`.
