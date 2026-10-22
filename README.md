@@ -49,7 +49,7 @@ https://github.com/vlad2939/home-assistant-addons
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.4` | Da | `3000` | Stabil |
 | MyTube Dash | `mytubedash-addon` | `mytubedash` | `2.0.6` | Da | `3000` | Stabil |
 | Gustos | `gustos` | `gustos` | `2.0.1` | Nu | `8099` | Stabil |
-| File Server | `file_server` | `file_server` | `1.9.0` | Nu | `8085` | Nou |
+| File Server | `file_server` | `file_server` | `2.0.0` | Nu | `8085` | Nou |
 
 Legendă:
 
