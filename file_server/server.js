@@ -152,6 +152,23 @@ function encodeDisposition(name) {
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
 
+const PREVIEW_TYPES = {
+  pdf: "application/pdf",
+  avif: "image/avif", bmp: "image/bmp", gif: "image/gif", ico: "image/x-icon",
+  jpeg: "image/jpeg", jpg: "image/jpeg", png: "image/png", svg: "image/svg+xml", webp: "image/webp",
+  aac: "audio/aac", flac: "audio/flac", m4a: "audio/mp4", mp3: "audio/mpeg", oga: "audio/ogg",
+  ogg: "audio/ogg", opus: "audio/ogg", wav: "audio/wav", weba: "audio/webm",
+  mp4: "video/mp4", m4v: "video/mp4", ogv: "video/ogg", webm: "video/webm",
+  txt: "text/plain; charset=utf-8", log: "text/plain; charset=utf-8", csv: "text/csv; charset=utf-8",
+  tsv: "text/tab-separated-values; charset=utf-8", json: "application/json; charset=utf-8", xml: "text/plain; charset=utf-8",
+  html: "text/html; charset=utf-8", htm: "text/html; charset=utf-8", css: "text/plain; charset=utf-8",
+  js: "text/plain; charset=utf-8", mjs: "text/plain; charset=utf-8", md: "text/plain; charset=utf-8",
+  yaml: "text/plain; charset=utf-8", yml: "text/plain; charset=utf-8", ini: "text/plain; charset=utf-8",
+  conf: "text/plain; charset=utf-8", sh: "text/plain; charset=utf-8", py: "text/plain; charset=utf-8",
+  c: "text/plain; charset=utf-8", h: "text/plain; charset=utf-8", cpp: "text/plain; charset=utf-8",
+  java: "text/plain; charset=utf-8", sql: "text/plain; charset=utf-8",
+};
+
 function streamZip(res, cwd, entries, archiveName) {
   res.writeHead(200, {
     "Content-Type": "application/zip",
@@ -174,6 +191,29 @@ async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   try {
     if (url.pathname.startsWith("/api/")) {
+      if (req.method === "GET" && url.pathname === "/api/preview") {
+        const rel = relativePath(url.searchParams.get("path"));
+        if (!rel) throw Object.assign(new Error("Selectează un fișier pentru previzualizare."), { status: 400 });
+        const extension = path.posix.extname(rel).slice(1).toLowerCase();
+        const contentType = PREVIEW_TYPES[extension];
+        if (!contentType) throw Object.assign(new Error("Acest tip de fișier nu poate fi previzualizat în Chrome."), { status: 415 });
+        const target = await checkedTarget(rel);
+        const stat = await fs.promises.stat(target);
+        if (!stat.isFile()) throw Object.assign(new Error("Doar fișierele pot fi previzualizate."), { status: 400 });
+        const name = path.posix.basename(rel);
+        const headers = {
+          "Content-Type": contentType,
+          "Content-Length": stat.size,
+          "Content-Disposition": `inline; ${encodeDisposition(name).slice("attachment; ".length)}`,
+          "X-Content-Type-Options": "nosniff",
+          "Cache-Control": "no-store",
+        };
+        if (["svg", "html", "htm"].includes(extension)) headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'";
+        res.writeHead(200, headers);
+        if (req.method === "HEAD") return res.end();
+        return fs.createReadStream(target).pipe(res);
+      }
+
       if (req.method === "GET" && url.pathname === "/api/usage") {
         const usedBytes = await getUsageBytes();
         return send(res, 200, { usedBytes, limitBytes: MAX_STORAGE_BYTES, availableBytes: Math.max(0, MAX_STORAGE_BYTES - usedBytes), percent: Math.min(100, usedBytes / MAX_STORAGE_BYTES * 100) });
