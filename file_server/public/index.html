@@ -72,6 +72,7 @@
           <div class="actionbar-left">
             <button class="button secondary" id="upload-folder" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M12 12v5m-2.5-2.5h5"/></svg>Încarcă folder</button>
             <button class="button secondary" id="new-folder" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M12 12v5m-2.5-2.5h5"/></svg>Folder nou</button>
+            <button class="button secondary" id="play-media" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>Redă media</button>
             <button class="button secondary" id="download-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>Descarcă selectate</button>
             <button class="button secondary" id="move-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6l2 2h8v10H4z"/><path d="M12 12v5m0 0 3-3m-3 3-3-3"/></svg>Mută în…</button>
             <button class="button danger-button" id="delete-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Șterge selectate <span id="selected-count">0</span></button>
@@ -104,6 +105,40 @@
   <input id="file-input" type="file" multiple hidden>
   <input id="folder-input" type="file" webkitdirectory directory multiple hidden>
   <aside id="transfer-panel" class="transfer-panel" aria-label="Transferuri" hidden><div class="transfer-head"><span><strong>Transferuri</strong><small id="transfer-summary">Pregătit</small></span><button class="panel-close" id="transfer-close" type="button" aria-label="Închide panoul">×</button></div><div id="transfer-list" class="transfer-list"></div></aside>
+  <div id="preview-modal" class="preview-overlay" role="dialog" aria-modal="true" aria-labelledby="preview-filename" hidden>
+    <section class="preview-dialog">
+      <header class="preview-header">
+        <div class="preview-title"><span id="preview-kind">Previzualizare</span><strong id="preview-filename"></strong></div>
+        <div class="preview-tools">
+          <button class="preview-nav" id="preview-previous" type="button" aria-label="Elementul anterior" title="Anterior">‹</button>
+          <button class="preview-nav" id="preview-next" type="button" aria-label="Elementul următor" title="Următor">›</button>
+          <a class="preview-download" id="preview-download" href="#" title="Descarcă" aria-label="Descarcă fișierul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg></a>
+          <button class="preview-close" id="preview-close" type="button" aria-label="Închide previzualizarea">×</button>
+        </div>
+      </header>
+      <div id="image-controls" class="image-controls" hidden>
+        <button class="preview-control" id="image-zoom-out" type="button" title="Micșorează">−</button>
+        <button class="preview-control zoom-reset" id="image-zoom-reset" type="button" title="Resetează zoom">100%</button>
+        <button class="preview-control" id="image-zoom-in" type="button" title="Mărește">+</button>
+        <button class="preview-control rotate-control" id="image-rotate" type="button" title="Rotește">↻</button>
+      </div>
+      <div class="preview-body" id="preview-body">
+        <img id="preview-image" class="preview-image" alt="Previzualizare" hidden>
+        <video id="preview-video" class="preview-video" controls playsinline preload="metadata" hidden></video>
+        <audio id="preview-audio" class="preview-audio" controls preload="metadata" hidden></audio>
+        <iframe id="preview-pdf" class="preview-pdf" title="Previzualizare PDF" hidden></iframe>
+        <pre id="preview-text" class="preview-text" hidden></pre>
+        <div id="preview-unsupported" class="preview-unsupported" hidden></div>
+      </div>
+    </section>
+  </div>
+  <aside id="mini-audio-player" class="mini-audio-player" aria-label="Mini-player audio" hidden>
+    <button id="mini-audio-play" class="mini-audio-play" type="button" aria-label="Redă sau pune pe pauză">▶</button>
+    <div class="mini-audio-track"><strong id="mini-audio-title"></strong><div class="mini-audio-progress"><span id="mini-audio-progress-fill"></span></div></div>
+    <span id="mini-audio-time" class="mini-audio-time">0:00 / 0:00</span>
+    <button id="mini-audio-open" class="mini-audio-button" type="button" title="Deschide playerul">↗</button>
+    <button id="mini-audio-close" class="mini-audio-button" type="button" title="Oprește și închide">×</button>
+  </aside>
   <div id="move-dialog" class="dialog-backdrop" role="presentation" hidden>
     <section class="move-dialog" role="dialog" aria-modal="true" aria-labelledby="move-title">
       <h2 id="move-title">Mută elementele selectate</h2>

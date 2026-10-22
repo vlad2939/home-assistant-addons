@@ -5,6 +5,8 @@ const state = {
   path: "", entries: [], selected: new Set(), sort: "name", descending: false,
   view: "list", query: "", toastTimer: null, transfers: new Map(), transferId: 0,
   transferFrame: 0,
+  previewItem: null, mediaPlaylist: [], mediaIndex: -1, imageZoom: 1, imageRotation: 0,
+  playAllActive: false,
 };
 const root = document.documentElement;
 const accentPalette = {
@@ -114,9 +116,9 @@ function formatRate(bytes, elapsed) {
 function fileKind(entry) {
   if (entry.type === "folder") return "folder";
   const ext = entry.name.split(".").pop().toLowerCase();
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "heic"].includes(ext)) return "image";
-  if (["mp3", "wav", "ogg", "m4a", "flac", "aac"].includes(ext)) return "audio";
-  if (["mp4", "mkv", "avi", "mov", "webm"].includes(ext)) return "video";
+  if (["avif", "bmp", "gif", "ico", "jpg", "jpeg", "png", "webp", "svg", "heic"].includes(ext)) return "image";
+  if (["aac", "flac", "m4a", "mp3", "oga", "ogg", "opus", "wav", "weba"].includes(ext)) return "audio";
+  if (["mp4", "m4v", "ogv", "webm", "mkv", "avi", "mov"].includes(ext)) return "video";
   if (["zip", "7z", "rar", "tar", "gz", "bz2"].includes(ext)) return "archive";
   return "file";
 }
@@ -130,8 +132,141 @@ const previewableExtensions = new Set([
 
 function isPreviewable(name) { return previewableExtensions.has(name.split(".").pop().toLowerCase()); }
 
-function openPreview(rel) {
-  window.open(`/api/preview?path=${encodeURIComponent(rel)}`, "_blank", "noopener,noreferrer");
+function previewType(name) {
+  const ext = name.split(".").pop().toLowerCase();
+  if (ext === "pdf") return "pdf";
+  if (["avif", "bmp", "gif", "ico", "jpeg", "jpg", "png", "svg", "webp"].includes(ext)) return "image";
+  if (["aac", "flac", "m4a", "mp3", "oga", "ogg", "opus", "wav", "weba"].includes(ext)) return "audio";
+  if (["mp4", "m4v", "ogv", "webm"].includes(ext)) return "video";
+  if (["txt", "log", "csv", "tsv", "json", "xml", "html", "htm", "css", "js", "mjs", "md", "yaml", "yml", "ini", "conf", "sh", "py", "c", "h", "cpp", "java", "sql"].includes(ext)) return "text";
+  return "";
+}
+
+function previewUrl(rel) { return `/api/preview?path=${encodeURIComponent(rel)}`; }
+
+function openPreview(rel, entry, keepPlaylist = false) {
+  const kind = previewType(entry.name);
+  if (!kind) return;
+  const item = { ...entry, path: rel, kind };
+  if (!keepPlaylist) {
+    state.playAllActive = false;
+    state.mediaPlaylist = state.entries
+      .filter((candidate) => candidate.type !== "folder" && ["audio", "video"].includes(previewType(candidate.name)))
+      .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: previewType(candidate.name) }));
+    state.mediaIndex = state.mediaPlaylist.findIndex((candidate) => candidate.path === rel);
+  }
+  showPreview(item);
+}
+
+function showPreview(item) {
+  const url = previewUrl(item.path);
+  const audio = $("preview-audio");
+  const video = $("preview-video");
+  const image = $("preview-image");
+  const pdf = $("preview-pdf");
+  const text = $("preview-text");
+  state.previewItem = item;
+  $("mini-audio-player").hidden = true;
+  $("preview-filename").textContent = item.name;
+  $("preview-kind").textContent = ({ image: "Imagine", video: "Video", audio: "Audio", pdf: "Document PDF", text: "Text / cod" })[item.kind] || "Previzualizare";
+  $("preview-download").href = `/api/download?path=${encodeURIComponent(item.path)}`;
+  $("preview-download").download = item.name;
+  const hasMediaQueue = ["audio", "video"].includes(item.kind) && state.mediaPlaylist.length > 1;
+  $("preview-previous").hidden = !hasMediaQueue;
+  $("preview-next").hidden = !hasMediaQueue;
+  $("image-controls").hidden = item.kind !== "image";
+  for (const element of [image, video, pdf, text]) element.hidden = true;
+  if (item.kind !== "audio") audio.hidden = true;
+  if (item.kind !== "video") { video.pause(); video.removeAttribute("src"); video.load(); }
+  pdf.removeAttribute("src");
+  text.textContent = "";
+  $("preview-modal").hidden = false;
+
+  if (item.kind === "image") {
+    state.imageZoom = 1;
+    state.imageRotation = 0;
+    image.src = url;
+    image.style.transform = "scale(1) rotate(0deg)";
+    $("image-zoom-reset").textContent = "100%";
+    image.hidden = false;
+  } else if (item.kind === "video") {
+    audio.pause();
+    video.src = url;
+    video.onended = playNextMedia;
+    video.hidden = false;
+    video.play().catch(() => {});
+  } else if (item.kind === "audio") {
+    audio.hidden = false;
+    $("mini-audio-player").hidden = true;
+    if (!audio.src.endsWith(url)) {
+      audio.src = url;
+      audio.load();
+    }
+    audio.onended = playNextMedia;
+    audio.play().catch(() => {});
+  } else if (item.kind === "pdf") {
+    pdf.src = url;
+    pdf.hidden = false;
+  } else {
+    text.textContent = "Se încarcă documentul…";
+    text.hidden = false;
+    fetch(url).then((response) => {
+      if (!response.ok) throw new Error(`Eroare HTTP ${response.status}`);
+      return response.text();
+    }).then((content) => {
+      if (state.previewItem?.path === item.path) text.textContent = content;
+    }).catch((error) => {
+      if (state.previewItem?.path === item.path) text.textContent = `Documentul nu a putut fi citit: ${error.message}`;
+    });
+  }
+}
+
+function closePreview() {
+  $("preview-modal").hidden = true;
+  const video = $("preview-video");
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+  $("preview-image").removeAttribute("src");
+  $("preview-pdf").removeAttribute("src");
+  const audio = $("preview-audio");
+  const audioIsPlaying = !audio.paused;
+  audio.hidden = true;
+  if (audioIsPlaying) {
+    $("mini-audio-title").textContent = state.previewItem?.name || "Redare audio";
+    $("mini-audio-player").hidden = false;
+  }
+}
+
+function stepMedia(direction) {
+  if (state.mediaPlaylist.length < 2) return;
+  state.mediaIndex = (state.mediaIndex + direction + state.mediaPlaylist.length) % state.mediaPlaylist.length;
+  showPreview(state.mediaPlaylist[state.mediaIndex]);
+}
+
+function playNextMedia() {
+  if (!state.playAllActive) return;
+  if (state.mediaIndex + 1 < state.mediaPlaylist.length) {
+    state.mediaIndex += 1;
+    showPreview(state.mediaPlaylist[state.mediaIndex]);
+  } else {
+    state.playAllActive = false;
+  }
+}
+
+function playAllMedia() {
+  state.mediaPlaylist = state.entries
+    .filter((entry) => entry.type !== "folder" && ["audio", "video"].includes(previewType(entry.name)))
+    .map((entry) => ({ ...entry, path: pathFor(entry.name), kind: previewType(entry.name) }));
+  if (!state.mediaPlaylist.length) return;
+  state.mediaIndex = 0;
+  state.playAllActive = true;
+  showPreview(state.mediaPlaylist[0]);
+}
+
+function formatMediaTime(seconds) {
+  if (!Number.isFinite(seconds)) return "0:00";
+  return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 }
 
 function pathFor(name) { return [state.path, name].filter(Boolean).join("/"); }
@@ -205,10 +340,9 @@ function createName(entry, rel) {
   title.title = entry.name;
   title.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : isPreviewable(entry.name) ? `${entry.name} — dublu-click pentru previzualizare în Chrome` : entry.name;
   if (entry.type === "folder") {
-    title.addEventListener("dblclick", () => navigate(rel));
     title.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
   } else if (isPreviewable(entry.name)) {
-    title.addEventListener("dblclick", () => openPreview(rel));
+    title.addEventListener("keydown", (event) => { if (event.key === "Enter") openPreview(rel, entry); });
   }
   const subtitle = document.createElement("small");
   subtitle.textContent = entry.type === "folder" ? "Folder" : fileKind(entry).toUpperCase();
@@ -261,6 +395,11 @@ function renderEntries() {
     actions.append(actionButton("delete", "Șterge", () => remove(rel, entry)));
     actionsCell.append(actions);
     row.append(checkCell, nameCell, sizeCell, typeCell, modifiedCell, actionsCell);
+    row.addEventListener("dblclick", (event) => {
+      if (event.target.closest(".row-actions, .row-check")) return;
+      if (entry.type === "folder") navigate(rel);
+      else if (isPreviewable(entry.name)) openPreview(rel, entry);
+    });
     list.append(row);
 
     const card = document.createElement("article");
@@ -275,7 +414,13 @@ function renderEntries() {
     cardHead.append(cardMenu);
     const cardIcon = document.createElement("div");
     cardIcon.className = `card-file-icon ${kind}`;
-    cardIcon.append(icon(kind));
+    if (kind === "image" && isPreviewable(entry.name) && entry.size <= 20 * 1024 * 1024) {
+      const thumbnail = document.createElement("img");
+      thumbnail.src = previewUrl(rel);
+      thumbnail.alt = "";
+      thumbnail.loading = "lazy";
+      cardIcon.append(thumbnail);
+    } else cardIcon.append(icon(kind));
     const cardName = document.createElement("button");
     cardName.type = "button";
     cardName.className = "card-file-name";
@@ -283,15 +428,19 @@ function renderEntries() {
     cardName.title = entry.name;
     cardName.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : isPreviewable(entry.name) ? `${entry.name} — dublu-click pentru previzualizare în Chrome` : entry.name;
     if (entry.type === "folder") {
-      cardName.addEventListener("dblclick", () => navigate(rel));
       cardName.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
     } else if (isPreviewable(entry.name)) {
-      cardName.addEventListener("dblclick", () => openPreview(rel));
+      cardName.addEventListener("keydown", (event) => { if (event.key === "Enter") openPreview(rel, entry); });
     }
     const cardMeta = document.createElement("span");
     cardMeta.className = "card-file-meta";
     cardMeta.textContent = entry.type === "folder" ? "Folder" : `${formatSize(entry.size)} · ${kind.toUpperCase()}`;
     card.append(cardHead, cardIcon, cardName, cardMeta);
+    card.addEventListener("dblclick", (event) => {
+      if (event.target.closest(".row-actions, .row-check")) return;
+      if (entry.type === "folder") navigate(rel);
+      else if (isPreviewable(entry.name)) openPreview(rel, entry);
+    });
     $("grid-list").append(card);
   }
 
@@ -301,6 +450,7 @@ function renderEntries() {
   $("empty-copy").textContent = state.query ? "Încearcă alt termen de căutare." : "Încarcă fișiere sau creează un folder pentru a începe.";
   $("empty-upload").hidden = Boolean(state.query);
   $("nav-count").textContent = state.entries.length;
+  $("play-media").hidden = !state.entries.some((entry) => entry.type !== "folder" && ["audio", "video"].includes(previewType(entry.name)));
   const selected = state.selected.size;
   $("selection-bar").hidden = selected === 0;
   $("download-selected").hidden = selected === 0;
@@ -651,6 +801,63 @@ $("move-selected").addEventListener("click", () => { void openMoveDialog().catch
 $("move-cancel").addEventListener("click", closeMoveDialog);
 $("move-confirm").addEventListener("click", moveSelected);
 $("move-dialog").addEventListener("click", (event) => { if (event.target === $("move-dialog")) closeMoveDialog(); });
+$("play-media").addEventListener("click", playAllMedia);
+$("preview-close").addEventListener("click", closePreview);
+$("preview-modal").addEventListener("click", (event) => { if (event.target === $("preview-modal")) closePreview(); });
+$("preview-previous").addEventListener("click", () => stepMedia(-1));
+$("preview-next").addEventListener("click", () => stepMedia(1));
+$("image-zoom-in").addEventListener("click", () => {
+  state.imageZoom = Math.min(3, state.imageZoom + .25);
+  $("preview-image").style.transform = `scale(${state.imageZoom}) rotate(${state.imageRotation}deg)`;
+  $("image-zoom-reset").textContent = `${Math.round(state.imageZoom * 100)}%`;
+});
+$("image-zoom-out").addEventListener("click", () => {
+  state.imageZoom = Math.max(.5, state.imageZoom - .25);
+  $("preview-image").style.transform = `scale(${state.imageZoom}) rotate(${state.imageRotation}deg)`;
+  $("image-zoom-reset").textContent = `${Math.round(state.imageZoom * 100)}%`;
+});
+$("image-zoom-reset").addEventListener("click", () => {
+  state.imageZoom = 1;
+  $("preview-image").style.transform = `scale(1) rotate(${state.imageRotation}deg)`;
+  $("image-zoom-reset").textContent = "100%";
+});
+$("image-rotate").addEventListener("click", () => {
+  state.imageRotation = (state.imageRotation + 90) % 360;
+  $("preview-image").style.transform = `scale(${state.imageZoom}) rotate(${state.imageRotation}deg)`;
+});
+$("preview-audio").addEventListener("play", () => { $("mini-audio-play").textContent = "Ⅱ"; });
+$("preview-audio").addEventListener("pause", () => { $("mini-audio-play").textContent = "▶"; });
+$("preview-audio").addEventListener("timeupdate", () => {
+  const audio = $("preview-audio");
+  const percent = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+  $("mini-audio-progress-fill").style.width = `${percent}%`;
+  $("mini-audio-time").textContent = `${formatMediaTime(audio.currentTime)} / ${formatMediaTime(audio.duration)}`;
+});
+$("preview-audio").addEventListener("loadedmetadata", () => {
+  const audio = $("preview-audio");
+  $("mini-audio-time").textContent = `0:00 / ${formatMediaTime(audio.duration)}`;
+});
+$("mini-audio-play").addEventListener("click", () => {
+  const audio = $("preview-audio");
+  if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+});
+$("mini-audio-open").addEventListener("click", () => {
+  if (!state.previewItem || state.previewItem.kind !== "audio") return;
+  showPreview(state.previewItem);
+});
+$("mini-audio-close").addEventListener("click", () => {
+  const audio = $("preview-audio");
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+  $("mini-audio-player").hidden = true;
+  state.playAllActive = false;
+});
+$("mini-audio-progress-fill").parentElement.addEventListener("click", (event) => {
+  const audio = $("preview-audio");
+  const bounds = event.currentTarget.getBoundingClientRect();
+  if (audio.duration && bounds.width) audio.currentTime = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)) * audio.duration;
+});
 $("clear-selection").addEventListener("click", () => { state.selected.clear(); renderEntries(); });
 $("list-view").addEventListener("click", () => {
   state.view = "list"; $("table-scroll").hidden = false; $("grid-list").hidden = true;
@@ -666,7 +873,7 @@ $("mobile-menu").addEventListener("click", () => { $("sidebar").classList.add("o
 $("sidebar-close").addEventListener("click", closeSidebar);
 $("sidebar-scrim").addEventListener("click", closeSidebar);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; closeMoveDialog(); }
+  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; closeMoveDialog(); closePreview(); }
 });
 
 $("logo-open").addEventListener("click", () => { $("logo-lightbox").hidden = false; });
