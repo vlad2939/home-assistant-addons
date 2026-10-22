@@ -121,6 +121,19 @@ function fileKind(entry) {
   return "file";
 }
 
+const previewableExtensions = new Set([
+  "pdf", "avif", "bmp", "gif", "ico", "jpeg", "jpg", "png", "svg", "webp",
+  "aac", "flac", "m4a", "mp3", "oga", "ogg", "opus", "wav", "weba",
+  "mp4", "m4v", "ogv", "webm",
+  "txt", "log", "csv", "tsv", "json", "xml", "html", "htm", "css", "js", "mjs", "md", "yaml", "yml", "ini", "conf", "sh", "py", "c", "h", "cpp", "java", "sql",
+]);
+
+function isPreviewable(name) { return previewableExtensions.has(name.split(".").pop().toLowerCase()); }
+
+function openPreview(rel) {
+  window.open(`/api/preview?path=${encodeURIComponent(rel)}`, "_blank", "noopener,noreferrer");
+}
+
 function pathFor(name) { return [state.path, name].filter(Boolean).join("/"); }
 
 function renderBreadcrumbs() {
@@ -190,10 +203,12 @@ function createName(entry, rel) {
   title.type = "button";
   title.textContent = entry.name;
   title.title = entry.name;
-  title.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : entry.name;
+  title.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : isPreviewable(entry.name) ? `${entry.name} — dublu-click pentru previzualizare în Chrome` : entry.name;
   if (entry.type === "folder") {
     title.addEventListener("dblclick", () => navigate(rel));
     title.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
+  } else if (isPreviewable(entry.name)) {
+    title.addEventListener("dblclick", () => openPreview(rel));
   }
   const subtitle = document.createElement("small");
   subtitle.textContent = entry.type === "folder" ? "Folder" : fileKind(entry).toUpperCase();
@@ -266,10 +281,12 @@ function renderEntries() {
     cardName.className = "card-file-name";
     cardName.textContent = entry.name;
     cardName.title = entry.name;
-    cardName.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : entry.name;
+    cardName.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : isPreviewable(entry.name) ? `${entry.name} — dublu-click pentru previzualizare în Chrome` : entry.name;
     if (entry.type === "folder") {
       cardName.addEventListener("dblclick", () => navigate(rel));
       cardName.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
+    } else if (isPreviewable(entry.name)) {
+      cardName.addEventListener("dblclick", () => openPreview(rel));
     }
     const cardMeta = document.createElement("span");
     cardMeta.className = "card-file-meta";
