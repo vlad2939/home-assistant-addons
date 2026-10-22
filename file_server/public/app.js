@@ -6,7 +6,8 @@ const state = {
   view: "list", query: "", toastTimer: null, transfers: new Map(), transferId: 0,
   transferFrame: 0,
   previewItem: null, audioItem: null, mediaPlaylist: [], mediaIndex: -1,
-  imagePlaylist: [], imageIndex: -1, imageZoom: 1, imageRotation: 0,
+  imagePlaylist: [], imageIndex: -1, documentPlaylist: [], documentIndex: -1,
+  imageZoom: 1, imageRotation: 0,
   playAllActive: false,
 };
 const root = document.documentElement;
@@ -156,6 +157,11 @@ function openPreview(rel, entry, keepPlaylist = false) {
         .filter((candidate) => candidate.type !== "folder" && previewType(candidate.name) === "image")
         .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: "image" }));
       state.imageIndex = state.imagePlaylist.findIndex((candidate) => candidate.path === rel);
+    } else if (["pdf", "text"].includes(kind)) {
+      state.documentPlaylist = visibleEntries()
+        .filter((candidate) => candidate.type !== "folder" && ["pdf", "text"].includes(previewType(candidate.name)))
+        .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: previewType(candidate.name) }));
+      state.documentIndex = state.documentPlaylist.findIndex((candidate) => candidate.path === rel);
     } else if (["audio", "video"].includes(kind)) {
       state.mediaPlaylist = visibleEntries()
         .filter((candidate) => candidate.type !== "folder" && ["audio", "video"].includes(previewType(candidate.name)))
@@ -182,9 +188,10 @@ function showPreview(item) {
   $("preview-download").href = `/api/download?path=${encodeURIComponent(item.path)}`;
   $("preview-download").download = item.name;
   const hasImageQueue = item.kind === "image" && state.imagePlaylist.length > 1;
+  const hasDocumentQueue = ["pdf", "text"].includes(item.kind) && state.documentPlaylist.length > 1;
   const hasMediaQueue = ["audio", "video"].includes(item.kind) && state.mediaPlaylist.length > 1;
-  $("preview-previous").hidden = !(hasImageQueue || hasMediaQueue);
-  $("preview-next").hidden = !(hasImageQueue || hasMediaQueue);
+  $("preview-previous").hidden = !(hasImageQueue || hasDocumentQueue || hasMediaQueue);
+  $("preview-next").hidden = !(hasImageQueue || hasDocumentQueue || hasMediaQueue);
   $("image-controls").hidden = item.kind !== "image";
   for (const element of [image, video, pdf, text]) element.hidden = true;
   if (item.kind !== "audio") audio.hidden = true;
@@ -254,6 +261,12 @@ function stepMedia(direction) {
     if (state.imagePlaylist.length < 2) return;
     state.imageIndex = (state.imageIndex + direction + state.imagePlaylist.length) % state.imagePlaylist.length;
     showPreview(state.imagePlaylist[state.imageIndex]);
+    return;
+  }
+  if (["pdf", "text"].includes(state.previewItem?.kind)) {
+    if (state.documentPlaylist.length < 2) return;
+    state.documentIndex = (state.documentIndex + direction + state.documentPlaylist.length) % state.documentPlaylist.length;
+    showPreview(state.documentPlaylist[state.documentIndex]);
     return;
   }
   if (state.mediaPlaylist.length < 2) return;
