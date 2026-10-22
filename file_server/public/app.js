@@ -305,6 +305,7 @@ function renderBreadcrumbs() {
   const nav = $("breadcrumbs");
   nav.replaceChildren();
   const parts = state.path ? state.path.split("/") : [];
+  $("back-folder").disabled = parts.length === 0;
   const add = (label, path, current = false) => {
     if (nav.childElementCount) {
       const sep = document.createElement("span");
@@ -506,6 +507,12 @@ async function navigate(path = state.path) {
     renderEntries();
   } catch (error) { toast(error.message, true); }
   finally { $("loading-state").hidden = true; }
+}
+
+function navigateBack() {
+  if (!state.path) return;
+  const parent = state.path.split("/").slice(0, -1).join("/");
+  void navigate(parent);
 }
 
 async function createFolder() {
@@ -812,6 +819,7 @@ $("refresh").addEventListener("click", () => { void navigate(); void refreshUsag
 $("new-folder").addEventListener("click", createFolder);
 $("upload-files").addEventListener("click", () => $("file-input").click());
 $("upload-folder").addEventListener("click", () => $("folder-input").click());
+$("back-folder").addEventListener("click", navigateBack);
 $("empty-upload").addEventListener("click", () => $("file-input").click());
 $("file-input").addEventListener("change", (event) => { void uploadFiles(event.target.files); event.target.value = ""; });
 $("folder-input").addEventListener("change", (event) => { void uploadFiles(event.target.files, true); event.target.value = ""; });

@@ -53,7 +53,10 @@
     <main class="main-panel">
       <header class="app-header">
         <button class="mobile-menu icon-button" id="mobile-menu" type="button" aria-label="Deschide meniul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-        <button class="button primary upload-main" id="upload-files" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><span>Încarcă fișiere</span></button>
+        <div class="upload-actions">
+          <button class="button primary upload-main" id="upload-files" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><span>Încarcă fișiere</span></button>
+          <button class="button secondary upload-folder-top" id="upload-folder" type="button" title="Încarcă folder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M12 12v5m-2.5-2.5h5"/></svg><span>Încarcă folder</span></button>
+        </div>
         <div class="header-tools">
           <button class="transfer-toggle" id="transfers-toggle" type="button" title="Arată transferurile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg><span>Transferuri</span><span class="transfer-badge" id="transfer-badge" hidden>0</span></button>
           <span class="header-divider"></span>
@@ -70,7 +73,7 @@
 
         <div class="actionbar">
           <div class="actionbar-left">
-            <button class="button secondary" id="upload-folder" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M12 12v5m-2.5-2.5h5"/></svg>Încarcă folder</button>
+            <button class="button secondary back-folder" id="back-folder" type="button" title="Revino la folderul anterior" aria-label="Back la folderul anterior" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5-7 7 7 7M8 12h12"/></svg><span>Back</span></button>
             <button class="button secondary" id="new-folder" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z"/><path d="M12 12v5m-2.5-2.5h5"/></svg>Folder nou</button>
             <button class="button secondary" id="play-media" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>Redă media</button>
             <button class="button secondary" id="download-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>Descarcă selectate</button>
