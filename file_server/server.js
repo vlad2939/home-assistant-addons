@@ -203,6 +203,11 @@ async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   try {
     if (url.pathname.startsWith("/api/")) {
+      if (req.method === "GET" && url.pathname === "/api/readme") {
+        const readme = await fs.promises.readFile(path.join(__dirname, "README.md"), "utf8");
+        return send(res, 200, readme, "text/markdown; charset=utf-8");
+      }
+
       if (req.method === "GET" && url.pathname === "/api/download-status") {
         const id = String(url.searchParams.get("id") || "");
         if (!/^[a-zA-Z0-9_-]{8,100}$/.test(id)) return send(res, 400, { error: "Identificator de transfer invalid." });

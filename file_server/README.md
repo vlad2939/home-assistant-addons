@@ -1,38 +1,79 @@
 # File Server
 
-Addon Home Assistant pentru gestionarea fișierelor din rețeaua locală, printr-o interfață responsive inspirată de manager-ele desktop de fișiere.
+Un spațiu de fișiere privat pentru rețeaua locală, administrat din browser și găzduit de Home Assistant. Interfața este optimizată pentru Chrome pe Windows și păstrează datele separat de containerul addonului.
 
-## Acces
+> **Notă de acces:** addonul nu folosește parolă. Orice dispozitiv care poate ajunge la portul său în rețeaua locală poate gestiona fișierele.
 
-După instalare și pornire, accesează din Chrome:
+## Acces rapid
+
+Deschide în Chrome:
 
 ```text
 http://IP-UL-HOME-ASSISTANT:8085
 ```
 
-Addon-ul nu solicită parolă. Orice dispozitiv care poate accesa portul `8085` poate încărca, descărca sau șterge fișiere.
+Înlocuiește `IP-UL-HOME-ASSISTANT` cu adresa IP locală a serverului Home Assistant.
 
-## Funcții
+## Ce poți face
 
-- navigare prin foldere;
-- încărcare de fișiere multiple și foldere (Chrome);
-- creare de foldere;
-- descărcare de fișiere sau foldere ca arhive ZIP;
-- ștergerea fișierelor și folderelor, cu confirmare;
-- descărcarea elementelor selectate ca arhivă ZIP;
-- mutarea elementelor selectate în foldere existente, fără suprascrierea destinațiilor;
-- teme deschisă și închisă, memorate în browser;
-- cinci culori de accent armonizate cu tema, cu alegerea memorată în browser;
-- vizualizare listă sau grilă, căutare în folderul curent, sortare și ștergere multiplă;
-- progres, viteză și anulare pentru transferurile de fișiere;
-- descărcarea fișierelor de peste 2 GB folosește fluxul nativ al browserului, cu progres raportat de server, evitând acumularea fișierului în memoria file serverului și a paginii;
-- cotă maximă de 15 GB, verificată la server, cu indicator pentru spațiul folosit și liber;
-- folderele se deschid la dublu-click; fișierele compatibile se previzualizează în aplicație, iar celelalte rămân disponibile prin butonul de descărcare;
-- preview pentru PDF, imagini, audio, video și fișiere text/cod uzuale; imaginile au zoom și rotire, audio/video au controale de redare, iar audio poate continua în mini-player;
-- navigare înainte/înapoi în lista media a folderului și redarea consecutivă a elementelor cu butonul „Redă media”;
-- previzualizare PDF încorporată și afișare text sigură pentru HTML, cod și documente text; arhivele nu se deschid la dublu-click;
-- logo-ul din bara laterală se poate deschide pe tot ecranul și se închide cu `Esc` sau click.
+### Fișiere și foldere
 
-Fișierele sunt păstrate în `/share/file_server` și rămân disponibile la repornirea ori actualizarea addon-ului. Pentru depanare în afara Home Assistant, directorul poate fi suprascris prin variabila `DATA_DIR`.
+- Navighează prin directoare, folosește breadcrumb-ul sau butonul **Back** pentru a urca spre rădăcină.
+- Încarcă unul sau mai multe fișiere, ori un folder întreg din Chrome.
+- Creează directoare, mută selecții în alte directoare și descarcă fișiere sau arhive ZIP.
+- Șterge fișiere și foldere cu confirmare. La încărcarea peste un fișier existent, aplicația cere confirmarea înlocuirii.
+- Caută și sortează elementele; alege vizualizarea listă sau grilă.
 
-Limita de 15 GB se aplică totalului fișierelor obișnuite din acest director și subdirectoarele lui. Fișierele simbolice nu sunt acceptate și nu se includ în total.
+### Previzualizare și redare
+
+Dublu-click pe un fișier deschide fereastra de preview. Dacă formatul nu poate fi afișat de Chrome, fereastra explică acest lucru și oferă butonul **Descarcă**.
+
+- **Imagini:** navigare anterior/următor, zoom și rotire.
+- **PDF și documente text/cod uzuale:** afișare în fereastră și navigare între documentele din folder.
+- **Audio și video:** redare cu controalele Chrome; audio poate continua în mini-player.
+- **Arhive și formate incompatibile:** fără preview; fișierul rămâne disponibil pentru descărcare.
+
+Compatibilitatea audio/video depinde și de codec-urile instalate și acceptate de Chrome.
+
+### Transferuri și spațiu
+
+- Panoul **Transferuri** indică progresul și viteza pentru încărcări și descărcări.
+- Fișierele de peste **2 GB** se descarcă prin fluxul nativ Chrome. Interfața nu le acumulează ca Blob în memoria paginii; progresul este raportat de server. Anularea se face din lista de descărcări Chrome.
+- Cota este de **15 GB** pentru totalul fișierelor din directorul addonului. Indicatorul din bara laterală arată spațiul folosit și disponibil.
+- Tema și culoarea de accent sunt alese local și memorate în browser.
+
+## Stocare și backup
+
+Datele sunt păstrate în:
+
+```text
+/share/file_server
+```
+
+Directorul rămâne disponibil după repornirea și actualizarea addonului. Configurația addonului exclude `share/file_server/*` din backup-urile Home Assistant; păstrează o copie separată dacă dorești backup pentru aceste fișiere.
+
+Limita de stocare este verificată de server la încărcare. Linkurile simbolice nu sunt acceptate și nu sunt incluse în calculul cotei.
+
+## Instalare și actualizare
+
+1. Adaugă repository-ul `vlad2939/home-assistant-addons` în magazinul de addon-uri Home Assistant, dacă nu este deja adăugat.
+2. Instalează **File Server** din magazin și pornește addonul.
+3. Deschide `http://IP-UL-HOME-ASSISTANT:8085` dintr-un dispozitiv din rețeaua locală.
+4. Pentru o versiune nouă, reîncarcă lista de addon-uri, apoi folosește **Actualizare** din pagina addonului.
+
+## Depanare
+
+- **Pagina nu se încarcă:** verifică dacă addonul rulează, dacă IP-ul Home Assistant este corect și dacă portul `8085` este disponibil în rețea.
+- **Un format nu se deschide:** folosește butonul **Descarcă** din fereastra de preview; redarea video/audio depinde de suportul Chrome pentru format și codec.
+- **Încărcarea este refuzată:** verifică spațiul liber din cota de 15 GiB și numele/calea destinației.
+- **Transfer mare:** lasă Chrome deschis până se termină descărcarea; urmărește progresul în aplicație sau în lista de descărcări Chrome.
+
+## Detalii tehnice
+
+- **Versiune:** `2.2.0`
+- **Port:** `8085/tcp`
+- **Arhitectură:** `amd64`
+- **Director persistent:** `/share/file_server`
+- **Fișiere principale:** `server.js`, `public/`, `config.yaml`, `Dockerfile`, `run.sh`
+
+Pentru depanare în afara Home Assistant, directorul de date poate fi suprascris cu variabila de mediu `DATA_DIR`.
