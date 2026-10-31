@@ -25,7 +25,7 @@ Addon-ul nu solicită parolă. Orice dispozitiv care poate accesa portul `8085` 
 - cinci culori de accent armonizate cu tema, cu alegerea memorată în browser;
 - vizualizare listă sau grilă, căutare în folderul curent, sortare și ștergere multiplă;
 - progres, viteză și anulare pentru transferurile de fișiere;
-- descărcarea fișierelor de peste 2 GiB folosește fluxul nativ al browserului, cu progres raportat de server, evitând acumularea fișierului în memoria file serverului și a paginii;
+- descărcarea fișierelor de peste 2 GB folosește fluxul nativ al browserului, cu progres raportat de server, evitând acumularea fișierului în memoria file serverului și a paginii;
 - cotă maximă de 15 GB, verificată la server, cu indicator pentru spațiul folosit și liber;
 - folderele se deschid la dublu-click; fișierele compatibile se previzualizează în aplicație, iar celelalte rămân disponibile prin butonul de descărcare;
 - preview pentru PDF, imagini, audio, video și fișiere text/cod uzuale; imaginile au zoom și rotire, audio/video au controale de redare, iar audio poate continua în mini-player;
