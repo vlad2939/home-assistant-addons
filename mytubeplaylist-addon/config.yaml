@@ -1,7 +1,7 @@
 name: "MyTube Playlist - viewer & editor"
-version: "2.0.7"
+version: "3.0.0"
 slug: "mytubeplaylist"
-description: "Versiunea pură HTML/CSS."
+description: "Playlist-uri cu JSON persistent pe serverul Home Assistant."
 arch:
   - amd64
   - aarch64

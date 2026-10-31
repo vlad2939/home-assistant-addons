@@ -307,6 +307,10 @@
             <span class="material-icons-round text-[18px] opacity-60">upload_file</span>
             <span>Deschide JSON</span>
           </button>
+          <button id="loadServerJsonBtn" type="button" class="w-full flex items-center gap-3 px-4 py-3.5 bg-white/70 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-2xl text-zinc-700 dark:text-zinc-300 text-[13px] font-semibold transition-all duration-200">
+            <span class="material-icons-round text-[18px] opacity-60">cloud_sync</span>
+            <span>Deschide data.json de pe server</span>
+          </button>
           <p class="text-[11px] text-zinc-400 dark:text-zinc-600 leading-relaxed">
             Încarcă un <code class="bg-black/5 dark:bg-white/8 px-1 rounded text-orange-500 dark:text-orange-400">data.json</code> existent pentru editare sau completare.
           </p>
@@ -430,6 +434,9 @@
           </div>
         </div>
 
+        <button id="saveServerJsonBtn" type="button" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-semibold bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/50 transition-all duration-200">
+          <span class="material-icons-round text-[18px]">save</span>Salvează pe serverul Home Assistant
+        </button>
         <!-- Generate + Clear — butoanele principale -->
         <div class="flex gap-2">
           <button id="generateBtn" disabled
@@ -786,7 +793,9 @@
 
   // DOM refs noi — editor features
   const loadJsonBtn              = document.getElementById('loadJsonBtn');
-  const loadJsonFileInput        = document.getElementById('loadJsonFileInput');
+  const loadJsonFileInput        = document.getElementById('loadJsonFileInput');
+  const loadServerJsonBtn = document.getElementById('loadServerJsonBtn');
+  const saveServerJsonBtn = document.getElementById('saveServerJsonBtn');
   const addManualPlaylistBtn     = document.getElementById('addManualPlaylistBtn');
   // Modal: add video
   const addVideoModal            = document.getElementById('addVideoModal');
@@ -1403,6 +1412,29 @@
   loadJsonFileInput.addEventListener('change', function() {
     const file = this.files && this.files[0];
     if (file) handleLoadJson(file);
+  });
+  loadServerJsonBtn.addEventListener('click', async () => {
+    loadServerJsonBtn.disabled = true;
+    try {
+      const response = await fetch('api/data', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      handleLoadJson(new File([await response.text()], 'data.json', { type: 'application/json' }));
+    } catch (error) {
+      showToast(`Nu am putut încărca data.json de pe server: ${error.message}`, 'error');
+    } finally { loadServerJsonBtn.disabled = false; }
+  });
+  saveServerJsonBtn.addEventListener('click', async () => {
+    if (!playlists.length) { showToast('Încarcă sau adaugă playlist-uri înainte de salvare.', 'warn'); return; }
+    if (!confirm('Înlocuiești data.json salvat pe server cu datele din editor?')) return;
+    saveServerJsonBtn.disabled = true;
+    try {
+      const response = await fetch('api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildDataObject(), null, 2) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+      showToast('data.json a fost salvat pe serverul Home Assistant.');
+    } catch (error) {
+      showToast(`Nu am putut salva data.json pe server: ${error.message}`, 'error');
+    } finally { saveServerJsonBtn.disabled = false; }
   });
 
   // ── Modal: adaugă clip manual ─────────────────────

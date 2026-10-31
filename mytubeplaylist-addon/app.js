@@ -1009,7 +1009,7 @@ async function init() {
   initTheme();
 
   try {
-    const res  = await fetch('data.json');
+    const res  = await fetch('api/data', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
