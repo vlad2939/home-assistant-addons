@@ -48,7 +48,7 @@ https://github.com/vlad2939/home-assistant-addons
 | MyTube Playlist | `mytubeplaylist-addon` | `mytubeplaylist` | `3.0.1` | Da | `3000` | Stabil |
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.4` | Da | `3000` | Stabil |
 | Gustos | `gustos` | `gustos` | `2.0.1` | Nu | `8099` | Stabil |
-| File Server | `file_server` | `file_server` | `2.1.0` | Nu | `8085` | Nou |
+| File Server | `file_server` | `file_server` | `2.2.0` | Nu | `8085` | Nou |
 
 Legendă:
 
@@ -193,10 +193,10 @@ Detalii:
 
 - folder: `file_server`;
 - slug: `file_server`;
-- versiune: `2.1.0`;
+- versiune: `2.2.0`;
 - acces: direct din browser pe IP-ul Home Assistant și portul `8085`;
 - folder de date: `/share/file_server`;
-- interfață: listă/grilă, căutare, sortare, selecție multiplă, preview/play pentru media și documente uzuale, descărcare ZIP și mutare în masă, teme dark/light, progres pentru upload/download, descărcări mari de peste 2 GB cu consum redus de memorie și indicator pentru cota de stocare de 15 GB;
+- interfață: listă/grilă, căutare, sortare, selecție multiplă, preview/play pentru media și documente, descărcare ZIP și mutare în masă, teme dark/light, progres pentru transferuri, descărcări mari de peste 2 GB și cotă de stocare de 15 GB; footerul deschide ghidul README în aplicație;
 - fișiere principale: `server.js`, `public/`, `icon.png`, `logo.png`, `config.yaml`, `Dockerfile`, `run.sh`.
 
 Adresa de acces în rețeaua locală: `http://IP-UL-HOME-ASSISTANT:8085`.
