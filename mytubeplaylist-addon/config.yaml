@@ -1,5 +1,5 @@
 name: "MyTube Playlist - viewer & editor"
-version: "3.0.0"
+version: "3.0.1"
 slug: "mytubeplaylist"
 description: "Playlist-uri cu JSON persistent pe serverul Home Assistant."
 arch:

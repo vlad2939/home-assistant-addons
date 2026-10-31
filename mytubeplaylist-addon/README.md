@@ -1,8 +1,10 @@
-# 📺 Minimalist YouTube Playlist - viewer & editor
+# 🎵 MyTube Playlist — viewer & editor
 
-Un dashboard personal pentru vizionarea clipurilor YouTube organizate în playlist-uri, construit cu tehnologii web pure. Elimină complet algoritmii de recomandare, reclamele vizuale și distracțiile platformei originale — rămâne doar conținutul tău.
+Aplicație pentru vizionarea clipurilor YouTube organizate în playlist-uri, cu un editor JSON inclus. Interfața folosește identitatea MyTube Playlist și logo-ul `icon.png`.
 
-![Versiune](https://img.shields.io/badge/versiune-1.0.2-blue.svg)
+Viewerul web de bază servește datele din `data.json`. Add-onul Home Assistant include suplimentar un backend mic pentru citirea și salvarea fișierului persistent din `/data/data.json`.
+
+![Versiune](https://img.shields.io/badge/HA%20Add--on-3.0.1-blue.svg)
 ![Tema Dark/Light](https://img.shields.io/badge/Tema-Dark%20%2F%20Light-orange?style=flat-square)
 ![Vanilla JS](https://img.shields.io/badge/JS-Vanilla%20ES6%2B-yellow?style=flat-square)
 ![Tailwind CSS](https://img.shields.io/badge/CSS-Tailwind%20CDN-38bdf8?style=flat-square)
@@ -15,6 +17,7 @@ Un dashboard personal pentru vizionarea clipurilor YouTube organizate în playli
 
 1. [Descriere generală](#1-descriere-generală)
 2. [Funcționalități](#2-funcționalități)
+   - [Add-on Home Assistant](#add-on-home-assistant)
 3. [Structura proiectului](#3-structura-proiectului)
 4. [JSON Builder — generare automată `data.json`](#4-json-builder--generare-automată-datajson)
 5. [Cum se editează manual `data.json`](#5-cum-se-editează-manual-datajson)
@@ -27,7 +30,7 @@ Un dashboard personal pentru vizionarea clipurilor YouTube organizate în playli
 
 ## 1. Descriere generală
 
-Minimalist YouTube Dashboard este o aplicație web **100% statică** — nu are backend, nu face apeluri la API-uri externe, nu colectează date. Funcționează direct în browser, citind un singur fișier de configurare (`data.json`) pe care tu îl controlezi complet.
+MyTube Playlist are un viewer web static, iar add-onul Home Assistant adaugă un backend local pentru persistența datelor. Viewerul nu folosește API-uri externe; JSON Builder apelează YouTube Data API v3 doar când îi ceri să preia un playlist.
 
 **Design:** Stil Glassmorphism premium cu fundal animat (blob-uri cu blur), sidebar flotant, carduri cu efecte hover și tranziții fluide. Suportă temă Dark și Light, detectată automat din preferințele sistemului și salvată în `localStorage`.
 
@@ -53,6 +56,8 @@ Minimalist YouTube Dashboard este o aplicație web **100% statică** — nu are 
 ### Gestionare date
 - **Load Data** — buton în sidebar care permite încărcarea unui fișier `data.json` local din calculator, înlocuind datele curente fără a reîncărca pagina. Suportă și **drag & drop** al fișierului direct pe sidebar.
 - **JSON Builder** — unealtă separată (`builder.html`) pentru generarea automată a fișierelor `data.json` din link-uri de playlist-uri YouTube, folosind YouTube Data API v3. Detalii în [secțiunea 4](#4-json-builder--generare-automată-datajson).
+- **Salvare persistentă în Home Assistant** — JSON Builder poate încărca și salva playlisturile pe server în /data/data.json; descărcarea locală rămâne disponibilă ca backup.
+- **Branding MyTube Playlist** — icon.png este folosit ca logo în viewer și în JSON Builder.
 
 ### UI / UX
 - **Sidebar** fix pe desktop (260px), slide-in cu overlay pe mobile.
@@ -62,6 +67,19 @@ Minimalist YouTube Dashboard este o aplicație web **100% statică** — nu are 
 - **Ecran de eroare** prietenos dacă `data.json` nu poate fi încărcat.
 
 ---
+
+## Add-on Home Assistant
+
+Add-onul servește viewerul și JSON Builder prin NGINX, cu un mic API Python pentru fișierul de date persistent.
+
+- La prima pornire, `data.json` inclus în imagine este copiat în `/data/data.json`. Copierea inițială nu se repetă, deci datele existente nu sunt suprascrise la restart sau upgrade.
+- În JSON Builder, **Deschide data.json de pe server** încarcă playlisturile persistente, iar **Salvează pe serverul Home Assistant** le scrie înapoi după confirmare.
+- Viewerul citește același fișier persistent; schimbările salvate se văd după reîncărcarea paginii.
+- API-ul acceptă doar JSON cu un array `playlists`, limitează cererile la 20 MB și înlocuiește fișierul atomic. Endpointurile sunt proxate intern de NGINX sub `api/data`.
+- **Generează & Descarcă** continuă să descarce un fișier local, util ca backup.
+- Logo-ul `icon.png` este inclus în imaginea containerului și afișat în viewer și Builder. Titlurile paginii și Builderului folosesc numele **MyTube Playlist**.
+
+Fișierele relevante: `server.py` (API), `nginx.conf` (proxy API), `run.sh` (inițializare persistentă), `Dockerfile` și `config.yaml`. Versiunea curentă a add-onului este **3.0.1**.
 
 ## 3. Structura proiectului
 
