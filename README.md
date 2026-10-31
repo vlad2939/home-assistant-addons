@@ -45,7 +45,7 @@ https://github.com/vlad2939/home-assistant-addons
 | TubeDash | `tubedash-addon` | `tubedash` | `5.0.7` | Da | `3000` | Stabil |
 | Full Web Server | `ha-webserver` | `full_web_server` | `1.0.4` | Da | `80` | Stabil |
 | WordPress Full Option | `ha-wordpress-addon` | `wordpress_full` | `1.0.2` | Nu | `80` | Stabil |
-| MyTube Playlist | `mytubeplaylist-addon` | `mytubeplaylist` | `2.0.0` | Da | `3000` | Stabil |
+| MyTube Playlist | `mytubeplaylist-addon` | `mytubeplaylist` | `3.0.1` | Da | `3000` | Stabil |
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.4` | Da | `3000` | Stabil |
 | Gustos | `gustos` | `gustos` | `2.0.1` | Nu | `8099` | Stabil |
 | File Server | `file_server` | `file_server` | `2.1.0` | Nu | `8085` | Nou |
