@@ -2,7 +2,7 @@
 
 > **Dashboard personal pentru vizionarea clipurilor YouTube. Fără algoritmi, fără notificări, 100% control vizual.**
 
-![Versiune](https://img.shields.io/badge/versiune-5.0.0-blue.svg)
+![Versiune](https://img.shields.io/badge/versiune-5.0.7-blue.svg)
 ![Arhitectura](https://img.shields.io/badge/arhitectură-Vanilla_JS_|_NGINX-red.svg)
 ![Date](https://img.shields.io/badge/bază_de_date-data.json-4CAF50.svg)
 ![Setup](https://img.shields.io/badge/platformă-Home_Assistant_Add--on-03A9F4.svg)
