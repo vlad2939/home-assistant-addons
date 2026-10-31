@@ -1,5 +1,5 @@
 name: "Full Web Server"
-version: "1.0.4"
+version: "1.0.5"
 slug: "full_web_server"
 description: "Server web NGINX complet (full option) care servește automat fișierele din folderul /share/webserver. Acum cu suport Ingress!"
 arch:
