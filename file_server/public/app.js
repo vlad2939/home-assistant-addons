@@ -640,6 +640,7 @@ function renderSelection(visible = visibleEntries()) {
   $("selection-bar").hidden = selected === 0;
   $("download-selected").hidden = selected === 0;
   $("move-selected").hidden = selected === 0;
+  $("rename-selected").hidden = selected !== 1;
   $("delete-selected").hidden = selected === 0;
   $("selected-count").textContent = selected;
   $("selection-label").textContent = `${selected} ${selected === 1 ? "element selectat" : "elemente selectate"}`;
@@ -829,15 +830,46 @@ function navigateBack() {
   void navigate(parent);
 }
 
-async function createFolder() {
-  const name = prompt("Numele folderului nou:");
-  if (name === null) return;
-  if (!name.trim()) return toast("Introdu un nume pentru folder.", true);
+function createFolder() {
+  $("folder-name-input").value = "";
+  $("folder-error").hidden = true;
+  $("folder-error").textContent = "";
+  $("folder-dialog").hidden = false;
+  $("folder-name-input").focus();
+}
+
+function closeFolderDialog() {
+  $("folder-dialog").hidden = true;
+}
+
+async function confirmCreateFolder() {
+  const name = $("folder-name-input").value.trim();
+  const error = $("folder-error");
+  if (!name) {
+    error.textContent = "Introdu un nume pentru folder.";
+    error.hidden = false;
+    $("folder-name-input").focus();
+    return;
+  }
+  const button = $("folder-confirm");
+  button.disabled = true;
+  error.hidden = true;
   try {
-    await api("/api/folders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: state.path, name: name.trim() }) });
+    await api("/api/folders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: state.path, name }) });
+    closeFolderDialog();
     toast("Folderul a fost creat.");
     await navigate();
-  } catch (error) { toast(error.message, true); }
+  } catch (requestError) {
+    error.textContent = requestError.message;
+    error.hidden = false;
+  } finally { button.disabled = false; }
+}
+
+function renameSelected() {
+  if (state.selected.size !== 1) return;
+  const rel = [...state.selected][0];
+  const entry = selectedEntryForPath(rel);
+  if (entry) renameEntry(rel, entry);
 }
 
 function closeRenameDialog() {
@@ -1339,6 +1371,7 @@ $("select-all").addEventListener("change", (event) => {
 $("delete-selected").addEventListener("click", deleteSelected);
 $("download-selected").addEventListener("click", downloadSelected);
 $("move-selected").addEventListener("click", () => { void openTargetDialog("move").catch((error) => toast(error.message, true)); });
+$("rename-selected").addEventListener("click", renameSelected);
 $("move-cancel").addEventListener("click", closeMoveDialog);
 $("move-confirm").addEventListener("click", confirmTargetAction);
 $("move-dialog").addEventListener("click", (event) => { if (event.target === $("move-dialog")) closeMoveDialog(); });
@@ -1346,6 +1379,10 @@ $("rename-cancel").addEventListener("click", closeRenameDialog);
 $("rename-confirm").addEventListener("click", confirmRename);
 $("rename-input").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); void confirmRename(); } });
 $("rename-dialog").addEventListener("click", (event) => { if (event.target === $("rename-dialog")) closeRenameDialog(); });
+$("folder-cancel").addEventListener("click", closeFolderDialog);
+$("folder-confirm").addEventListener("click", () => { void confirmCreateFolder(); });
+$("folder-name-input").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); void confirmCreateFolder(); } });
+$("folder-dialog").addEventListener("click", (event) => { if (event.target === $("folder-dialog")) closeFolderDialog(); });
 $("delete-cancel").addEventListener("click", closeDeleteDialog);
 $("delete-confirm").addEventListener("click", confirmDelete);
 $("delete-dialog").addEventListener("click", (event) => { if (event.target === $("delete-dialog") && !$("delete-confirm").disabled) closeDeleteDialog(); });
@@ -1426,7 +1463,7 @@ $("mobile-menu").addEventListener("click", () => { $("sidebar").classList.add("o
 $("sidebar-close").addEventListener("click", closeSidebar);
 $("sidebar-scrim").addEventListener("click", closeSidebar);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; $("readme-modal").hidden = true; closeMoveDialog(); closeRenameDialog(); closeDeleteDialog(); closePreview(); }
+  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; $("readme-modal").hidden = true; closeMoveDialog(); closeRenameDialog(); closeDeleteDialog(); closeFolderDialog(); closePreview(); }
 });
 
 $("logo-open").addEventListener("click", () => { $("logo-lightbox").hidden = false; });

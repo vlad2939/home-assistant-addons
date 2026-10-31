@@ -79,6 +79,7 @@
             <button class="button secondary" id="play-media" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>Redă media</button>
             <button class="button secondary" id="download-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>Descarcă selectate</button>
             <button class="button secondary" id="move-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6l2 2h8v10H4z"/><path d="M12 12v5m0 0 3-3m-3 3-3-3"/></svg>Mută în…</button>
+            <button class="button secondary" id="rename-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4.2-.9L19 8.3a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z"/><path d="M13 20h7"/></svg>Redenumește</button>
             <button class="button danger-button" id="delete-selected" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Șterge selectate <span id="selected-count">0</span></button>
           </div>
           <div class="actionbar-right">
@@ -176,6 +177,16 @@
       <ul id="delete-list" class="delete-list"></ul>
       <p id="delete-error" class="dialog-error" role="alert" hidden></p>
       <div class="dialog-actions"><button class="button secondary" id="delete-cancel" type="button">Anulează</button><button class="button danger-button solid" id="delete-confirm" type="button">Șterge definitiv</button></div>
+    </section>
+  </div>
+  <div id="folder-dialog" class="dialog-backdrop" role="presentation" hidden>
+    <section class="move-dialog" role="dialog" aria-modal="true" aria-labelledby="folder-title">
+      <h2 id="folder-title">Folder nou</h2>
+      <p>Creează un folder în locația curentă.</p>
+      <label for="folder-name-input">Numele folderului</label>
+      <input id="folder-name-input" type="text" autocomplete="off" spellcheck="false">
+      <p id="folder-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button secondary" id="folder-cancel" type="button">Anulează</button><button class="button primary" id="folder-confirm" type="button">Creează folderul</button></div>
     </section>
   </div>
   <div id="logo-lightbox" class="logo-lightbox" role="dialog" aria-modal="true" aria-label="Logo File Server" hidden><img src="/logo.png" alt="Logo File Server"></div>
