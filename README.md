@@ -210,7 +210,7 @@ Detalii:
 - versiune: `2.1.0`;
 - acces: direct din browser pe IP-ul Home Assistant și portul `8085`;
 - folder de date: `/share/file_server`;
-- interfață: listă/grilă, căutare, sortare, selecție multiplă, preview/play pentru media și documente uzuale, descărcare ZIP și mutare în masă, teme dark/light, progres pentru upload/download, descărcări mari de peste 2 GiB cu consum redus de memorie și indicator pentru cota de stocare de 15 GB;
+- interfață: listă/grilă, căutare, sortare, selecție multiplă, preview/play pentru media și documente uzuale, descărcare ZIP și mutare în masă, teme dark/light, progres pentru upload/download, descărcări mari de peste 2 GB cu consum redus de memorie și indicator pentru cota de stocare de 15 GB;
 - fișiere principale: `server.js`, `public/`, `icon.png`, `logo.png`, `config.yaml`, `Dockerfile`, `run.sh`.
 
 Adresa de acces în rețeaua locală: `http://IP-UL-HOME-ASSISTANT:8085`.
