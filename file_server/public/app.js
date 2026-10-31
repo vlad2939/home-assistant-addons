@@ -3,7 +3,9 @@
 const $ = (id) => document.getElementById(id);
 const state = {
   path: "", entries: [], selected: new Set(), sort: "name", descending: false,
-  view: "list", query: "", toastTimer: null, transfers: new Map(), transferId: 0,
+  view: "list", query: "", globalSearch: false, globalResults: [], searchToken: 0, searchTimer: null,
+  lastSelectedPath: null, targetAction: "move", contextMenuEntry: null,
+  toastTimer: null, transfers: new Map(), transferId: 0,
   transferFrame: 0,
   previewItem: null, audioItem: null, mediaPlaylist: [], mediaIndex: -1,
   imagePlaylist: [], imageIndex: -1, documentPlaylist: [], documentIndex: -1,
@@ -154,17 +156,17 @@ function openPreview(rel, entry, keepPlaylist = false) {
     if (kind === "image") {
       state.imagePlaylist = visibleEntries()
         .filter((candidate) => candidate.type !== "folder" && previewType(candidate.name) === "image")
-        .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: "image" }));
+        .map((candidate) => ({ ...candidate, path: entryPath(candidate), kind: "image" }));
       state.imageIndex = state.imagePlaylist.findIndex((candidate) => candidate.path === rel);
     } else if (["pdf", "text"].includes(kind)) {
       state.documentPlaylist = visibleEntries()
         .filter((candidate) => candidate.type !== "folder" && ["pdf", "text"].includes(previewType(candidate.name)))
-        .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: previewType(candidate.name) }));
+        .map((candidate) => ({ ...candidate, path: entryPath(candidate), kind: previewType(candidate.name) }));
       state.documentIndex = state.documentPlaylist.findIndex((candidate) => candidate.path === rel);
     } else if (["audio", "video"].includes(kind)) {
       state.mediaPlaylist = visibleEntries()
         .filter((candidate) => candidate.type !== "folder" && ["audio", "video"].includes(previewType(candidate.name)))
-        .map((candidate) => ({ ...candidate, path: pathFor(candidate.name), kind: previewType(candidate.name) }));
+        .map((candidate) => ({ ...candidate, path: entryPath(candidate), kind: previewType(candidate.name) }));
       state.mediaIndex = state.mediaPlaylist.findIndex((candidate) => candidate.path === rel);
     }
   }
@@ -297,7 +299,7 @@ function playNextMedia() {
 function playAllMedia() {
   state.mediaPlaylist = state.entries
     .filter((entry) => entry.type !== "folder" && ["audio", "video"].includes(previewType(entry.name)))
-    .map((entry) => ({ ...entry, path: pathFor(entry.name), kind: previewType(entry.name) }));
+    .map((entry) => ({ ...entry, path: entryPath(entry), kind: previewType(entry.name) }));
   if (!state.mediaPlaylist.length) return;
   state.mediaIndex = 0;
   state.playAllActive = true;
@@ -418,6 +420,15 @@ function formatMediaTime(seconds) {
 }
 
 function pathFor(name) { return [state.path, name].filter(Boolean).join("/"); }
+function entryPath(entry) { return entry.path || pathFor(entry.name); }
+function topLevelPaths(paths) {
+  const ordered = [...new Set(paths)].sort((a, b) => a.length - b.length);
+  const result = [];
+  for (const candidate of ordered) {
+    if (!result.some((parent) => candidate.startsWith(`${parent}/`))) result.push(candidate);
+  }
+  return result;
+}
 
 function renderBreadcrumbs() {
   const nav = $("breadcrumbs");
@@ -448,7 +459,8 @@ function renderBreadcrumbs() {
 
 function visibleEntries() {
   const query = state.query.trim().toLocaleLowerCase("ro");
-  const entries = state.entries.filter((entry) => !query || entry.name.toLocaleLowerCase("ro").includes(query));
+  const source = state.globalSearch && query ? state.globalResults : state.entries;
+  const entries = source.filter((entry) => state.globalSearch && query.length >= 2 || !query || entry.name.toLocaleLowerCase("ro").includes(query));
   const key = state.sort;
   entries.sort((a, b) => {
     if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
@@ -487,14 +499,14 @@ function createName(entry, rel) {
   title.type = "button";
   title.textContent = entry.name;
   title.title = entry.name;
-  title.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : isPreviewable(entry.name) ? `${entry.name} — dublu-click pentru previzualizare în Chrome` : entry.name;
+  title.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : `${entry.name} — dublu-click pentru preview`;
   if (entry.type === "folder") {
     title.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
-  } else if (isPreviewable(entry.name)) {
+  } else {
     title.addEventListener("keydown", (event) => { if (event.key === "Enter") openPreview(rel, entry); });
   }
   const subtitle = document.createElement("small");
-  subtitle.textContent = entry.type === "folder" ? "Folder" : fileKind(entry).toUpperCase();
+  subtitle.textContent = entry.path ? `${entry.path.includes("/") ? entry.path.slice(0, entry.path.lastIndexOf("/")) : "Rădăcină"} · ${entry.type === "folder" ? "Folder" : fileKind(entry).toUpperCase()}` : entry.type === "folder" ? "Folder" : fileKind(entry).toUpperCase();
   copy.append(title, subtitle);
   wrap.append(badge, copy);
   return wrap;
@@ -508,7 +520,8 @@ function createCheckbox(rel) {
   checkbox.setAttribute("aria-label", "Selectează elementul");
   checkbox.addEventListener("change", () => {
     if (checkbox.checked) state.selected.add(rel); else state.selected.delete(rel);
-    renderEntries();
+    state.lastSelectedPath = rel;
+    renderSelection();
   });
   return checkbox;
 }
@@ -519,9 +532,10 @@ function renderEntries() {
   list.replaceChildren();
   $("grid-list").replaceChildren();
   for (const entry of visible) {
-    const rel = pathFor(entry.name);
+    const rel = entryPath(entry);
     const kind = fileKind(entry);
     const row = document.createElement("tr");
+    row.dataset.path = rel;
     row.className = state.selected.has(rel) ? "selected" : "";
     const checkCell = document.createElement("td");
     checkCell.className = "check-col";
@@ -549,9 +563,12 @@ function renderEntries() {
       if (entry.type === "folder") navigate(rel);
       else openPreview(rel, entry);
     });
+    row.addEventListener("click", (event) => selectEntry(rel, event));
+    row.addEventListener("contextmenu", (event) => openContextMenu(event, entry, rel));
     list.append(row);
 
     const card = document.createElement("article");
+    card.dataset.path = rel;
     card.className = `file-card${state.selected.has(rel) ? " selected" : ""}`;
     const cardHead = document.createElement("div");
     cardHead.className = "file-card-head";
@@ -583,23 +600,41 @@ function renderEntries() {
     }
     const cardMeta = document.createElement("span");
     cardMeta.className = "card-file-meta";
-    cardMeta.textContent = entry.type === "folder" ? "Folder" : `${formatSize(entry.size)} · ${kind.toUpperCase()}`;
+    cardMeta.textContent = entry.path ? `${entry.path.includes("/") ? entry.path.slice(0, entry.path.lastIndexOf("/")) : "Rădăcină"} · ${entry.type === "folder" ? "Folder" : `${formatSize(entry.size)} · ${kind.toUpperCase()}`}` : entry.type === "folder" ? "Folder" : `${formatSize(entry.size)} · ${kind.toUpperCase()}`;
     card.append(cardHead, cardIcon, cardName, cardMeta);
     card.addEventListener("dblclick", (event) => {
       if (event.target.closest(".row-actions, .row-check")) return;
       if (entry.type === "folder") navigate(rel);
       else openPreview(rel, entry);
     });
+    card.addEventListener("click", (event) => selectEntry(rel, event));
+    card.addEventListener("contextmenu", (event) => openContextMenu(event, entry, rel));
     $("grid-list").append(card);
   }
 
   const isEmpty = visible.length === 0;
   $("empty-state").hidden = !isEmpty;
   $("empty-title").textContent = state.query ? "Niciun rezultat" : "Acest folder este gol";
-  $("empty-copy").textContent = state.query ? "Încearcă alt termen de căutare." : "Încarcă fișiere sau creează un folder pentru a începe.";
+  $("empty-copy").textContent = state.globalSearch && state.query.trim().length < 2 ? "Introdu cel puțin 2 caractere pentru căutarea globală." : state.query ? state.globalSearch ? "Nu s-au găsit potriviri în spațiul de stocare." : "Încearcă alt termen de căutare." : "Încarcă fișiere sau creează un folder pentru a începe.";
   $("empty-upload").hidden = Boolean(state.query);
   $("nav-count").textContent = state.entries.length;
-  $("play-media").hidden = !state.entries.some((entry) => entry.type !== "folder" && ["audio", "video"].includes(previewType(entry.name)));
+  $("play-media").hidden = state.globalSearch || !state.entries.some((entry) => entry.type !== "folder" && ["audio", "video"].includes(previewType(entry.name)));
+  renderSelection(visible);
+}
+
+function renderSelection(visible = visibleEntries()) {
+  for (const row of $("file-list").querySelectorAll("tr[data-path]")) {
+    const selected = state.selected.has(row.dataset.path);
+    row.classList.toggle("selected", selected);
+    const checkbox = row.querySelector(".row-check");
+    if (checkbox) checkbox.checked = selected;
+  }
+  for (const card of $("grid-list").querySelectorAll(".file-card[data-path]")) {
+    const selected = state.selected.has(card.dataset.path);
+    card.classList.toggle("selected", selected);
+    const checkbox = card.querySelector(".row-check");
+    if (checkbox) checkbox.checked = selected;
+  }
   const selected = state.selected.size;
   $("selection-bar").hidden = selected === 0;
   $("download-selected").hidden = selected === 0;
@@ -607,12 +642,140 @@ function renderEntries() {
   $("delete-selected").hidden = selected === 0;
   $("selected-count").textContent = selected;
   $("selection-label").textContent = `${selected} ${selected === 1 ? "element selectat" : "elemente selectate"}`;
-  const checkableVisible = visible.map((entry) => pathFor(entry.name));
+  const checkableVisible = visible.map(entryPath);
   $("select-all").checked = checkableVisible.length > 0 && checkableVisible.every((rel) => state.selected.has(rel));
   $("select-all").indeterminate = checkableVisible.some((rel) => state.selected.has(rel)) && !$("select-all").checked;
 }
 
+function selectEntry(rel, event) {
+  if (event.target.closest(".row-actions, .row-check")) return;
+  const paths = visibleEntries().map(entryPath);
+  if (event.shiftKey && state.lastSelectedPath && paths.includes(state.lastSelectedPath)) {
+    if (!event.ctrlKey && !event.metaKey) state.selected.clear();
+    const start = paths.indexOf(state.lastSelectedPath);
+    const end = paths.indexOf(rel);
+    for (const path of paths.slice(Math.min(start, end), Math.max(start, end) + 1)) state.selected.add(path);
+  } else if (event.ctrlKey || event.metaKey) {
+    if (state.selected.has(rel)) state.selected.delete(rel); else state.selected.add(rel);
+    state.lastSelectedPath = rel;
+  } else {
+    state.selected.clear();
+    state.selected.add(rel);
+    state.lastSelectedPath = rel;
+  }
+  renderSelection();
+}
+
+function closeContextMenu() {
+  $("context-menu").hidden = true;
+  state.contextMenuEntry = null;
+}
+
+function addContextMenuItem(label, callback, { danger = false, disabled = false, shortcut = "" } = {}) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `context-menu-item${danger ? " danger" : ""}`;
+  button.setAttribute("role", "menuitem");
+  button.disabled = disabled;
+  const text = document.createElement("span");
+  text.textContent = label;
+  button.append(text);
+  if (shortcut) {
+    const hint = document.createElement("small");
+    hint.textContent = shortcut;
+    button.append(hint);
+  }
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    closeContextMenu();
+    if (!disabled) callback();
+  });
+  $("context-menu").append(button);
+}
+
+function addContextSeparator() {
+  const separator = document.createElement("div");
+  separator.className = "context-menu-separator";
+  separator.setAttribute("role", "separator");
+  $("context-menu").append(separator);
+}
+
+function openContextMenu(event, entry, rel) {
+  event.preventDefault();
+  event.stopPropagation();
+  if (!state.selected.has(rel)) {
+    state.selected.clear();
+    state.selected.add(rel);
+    state.lastSelectedPath = rel;
+    renderSelection();
+  }
+  state.contextMenuEntry = { entry, rel };
+  const menu = $("context-menu");
+  menu.replaceChildren();
+  const selectedPaths = [...state.selected];
+  const multiple = selectedPaths.length > 1;
+  const current = state.contextMenuEntry;
+  if (!multiple) {
+    addContextMenuItem(current.entry.type === "folder" ? "Deschide folderul" : "Previzualizează / detalii", () => {
+      if (current.entry.type === "folder") navigate(current.rel); else openPreview(current.rel, current.entry);
+    }, { shortcut: "Enter" });
+    addContextMenuItem("Descarcă", () => startDownload(current.rel, current.entry));
+    addContextSeparator();
+    addContextMenuItem("Redenumește", () => renameEntry(current.rel, current.entry), { shortcut: "F2" });
+    addContextMenuItem("Copiază în…", () => { state.selected = new Set([current.rel]); renderSelection(); void openTargetDialog("copy").catch((error) => toast(error.message, true)); });
+    addContextMenuItem("Mută în…", () => { state.selected = new Set([current.rel]); renderSelection(); void openTargetDialog("move").catch((error) => toast(error.message, true)); });
+    addContextSeparator();
+    addContextMenuItem("Șterge", () => remove(current.rel, current.entry), { danger: true, shortcut: "Delete" });
+  } else {
+    addContextMenuItem(`Descarcă selectatele (${selectedPaths.length})`, downloadSelected);
+    addContextMenuItem("Copiază selectatele în…", () => { void openTargetDialog("copy").catch((error) => toast(error.message, true)); });
+    addContextMenuItem("Mută selectatele în…", () => { void openTargetDialog("move").catch((error) => toast(error.message, true)); });
+    addContextSeparator();
+    addContextMenuItem(`Șterge selectatele (${selectedPaths.length})`, deleteSelected, { danger: true, shortcut: "Delete" });
+  }
+  addContextSeparator();
+  addContextMenuItem("Selectează toate rezultatele", () => {
+    for (const item of visibleEntries()) state.selected.add(entryPath(item));
+    renderSelection();
+  });
+  addContextMenuItem("Anulează selecția", () => { state.selected.clear(); renderSelection(); }, { disabled: selectedPaths.length === 0 });
+  menu.hidden = false;
+  const menuWidth = menu.offsetWidth;
+  const menuHeight = menu.offsetHeight;
+  menu.style.left = `${Math.max(8, Math.min(event.clientX, window.innerWidth - menuWidth - 8))}px`;
+  menu.style.top = `${Math.max(8, Math.min(event.clientY, window.innerHeight - menuHeight - 8))}px`;
+  menu.querySelector("button:not(:disabled)")?.focus();
+}
+
+function selectedEntryForPath(rel) {
+  return [...state.entries, ...state.globalResults].find((entry) => entryPath(entry) === rel);
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") { closeContextMenu(); return; }
+  if (!$("context-menu").hidden || event.target.closest("input, textarea, select, [contenteditable='true'], .file-name, .card-file-name")) return;
+  const paths = [...state.selected];
+  if (event.key === "F2" && paths.length === 1) {
+    const entry = selectedEntryForPath(paths[0]);
+    if (entry) { event.preventDefault(); void renameEntry(paths[0], entry); }
+  } else if (event.key === "Delete" && paths.length) {
+    event.preventDefault();
+    if (paths.length === 1) {
+      const entry = selectedEntryForPath(paths[0]);
+      if (entry) void remove(paths[0], entry);
+    } else void deleteSelected();
+  }
+});
+
 async function navigate(path = state.path) {
+  if (state.globalSearch && path !== state.path) {
+    state.globalSearch = false;
+    state.globalResults = [];
+    state.query = "";
+    state.searchToken += 1;
+    $("search").value = "";
+    updateSearchScope();
+  }
   $("loading-state").hidden = false;
   $("empty-state").hidden = true;
   $("file-list").replaceChildren();
@@ -621,10 +784,42 @@ async function navigate(path = state.path) {
     state.path = result.path;
     state.entries = result.entries;
     state.selected.clear();
+    state.lastSelectedPath = null;
     renderBreadcrumbs();
     renderEntries();
   } catch (error) { toast(error.message, true); }
   finally { $("loading-state").hidden = true; }
+  if (state.globalSearch && state.query.trim().length >= 2) await runGlobalSearch();
+}
+
+function updateSearchScope() {
+  const button = $("search-scope");
+  button.textContent = state.globalSearch ? "Tot spațiul" : "Folder curent";
+  button.setAttribute("aria-pressed", String(state.globalSearch));
+  button.title = state.globalSearch ? "Caută în toate folderele; click pentru căutare locală" : "Click pentru a căuta în toate folderele";
+  $("search").placeholder = state.globalSearch ? "Caută în toate folderele" : "Caută în acest folder";
+}
+
+async function runGlobalSearch() {
+  const query = state.query.trim();
+  const token = ++state.searchToken;
+  if (query.length < 2) {
+    state.globalResults = [];
+    renderEntries();
+    return;
+  }
+  $("loading-state").hidden = false;
+  try {
+    const result = await api(`/api/search?q=${encodeURIComponent(query)}`);
+    if (token !== state.searchToken) return;
+    state.globalResults = result.entries;
+    renderEntries();
+    if (result.truncated) toast("Afișez primele 1.000 de rezultate. Rafinează căutarea pentru mai multe potriviri.");
+  } catch (error) {
+    if (token === state.searchToken) toast(error.message, true);
+  } finally {
+    if (token === state.searchToken) $("loading-state").hidden = true;
+  }
 }
 
 function navigateBack() {
@@ -644,6 +839,17 @@ async function createFolder() {
   } catch (error) { toast(error.message, true); }
 }
 
+async function renameEntry(rel, entry) {
+  const name = prompt("Noul nume:", entry.name);
+  if (name === null || !name.trim() || name.trim() === entry.name) return;
+  try {
+    await api("/api/rename", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: rel, name: name.trim() }) });
+    state.selected.delete(rel);
+    toast("Elementul a fost redenumit.");
+    await navigate();
+  } catch (error) { toast(error.message, true); }
+}
+
 async function remove(rel, entry) {
   const subject = entry.type === "folder" ? `folderul „${entry.name}” și tot conținutul lui` : `fișierul „${entry.name}”`;
   if (!confirm(`Ștergi ${subject}? Acțiunea nu poate fi anulată.`)) return;
@@ -657,7 +863,7 @@ async function remove(rel, entry) {
 }
 
 async function deleteSelected() {
-  const paths = [...state.selected];
+  const paths = topLevelPaths([...state.selected]);
   if (!paths.length || !confirm(`Ștergi definitiv cele ${paths.length} elemente selectate?`)) return;
   let removed = 0;
   for (const rel of paths) {
@@ -671,15 +877,18 @@ async function deleteSelected() {
 
 function closeMoveDialog() { $("move-dialog").hidden = true; }
 
-async function openMoveDialog() {
-  const selected = [...state.selected];
-  const selectedEntries = selected.map((rel) => ({ rel, entry: state.entries.find((item) => pathFor(item.name) === rel) })).filter((item) => item.entry);
+async function openTargetDialog(mode) {
+  state.targetAction = mode;
+  const selected = topLevelPaths([...state.selected]);
+  const knownEntries = [...state.entries, ...state.globalResults];
+  const entryMap = new Map(knownEntries.map((entry) => [entryPath(entry), entry]));
+  const selectedEntries = selected.map((rel) => ({ rel, entry: entryMap.get(rel) })).filter((item) => item.entry);
   const result = await api("/api/folders");
   const select = $("move-destination");
   select.replaceChildren();
   const candidates = [{ path: "", name: "Rădăcină / Fișiere" }, ...result.folders]
-    .filter((folder) => folder.path !== state.path)
-    .filter((folder) => !selectedEntries.some(({ entry }) => entry.type === "folder" && (folder.path === pathFor(entry.name) || folder.path.startsWith(`${pathFor(entry.name)}/`))))
+    .filter((folder) => mode === "copy" || !selectedEntries.some(({ rel }) => (rel.includes("/") ? rel.slice(0, rel.lastIndexOf("/")) : "") === folder.path))
+    .filter((folder) => !selectedEntries.some(({ entry, rel }) => entry.type === "folder" && (folder.path === rel || folder.path.startsWith(`${rel}/`))))
     .sort((a, b) => (a.path ? 1 : -1) - (b.path ? 1 : -1) || a.path.localeCompare(b.path, "ro", { sensitivity: "base" }));
   for (const folder of candidates) {
     const option = document.createElement("option");
@@ -688,7 +897,9 @@ async function openMoveDialog() {
     option.textContent = `${"　".repeat(depth)}${folder.path ? folder.name : folder.name}`;
     select.append(option);
   }
-  $("move-description").textContent = `${selected.length} ${selected.length === 1 ? "element selectat" : "elemente selectate"}. Alege folderul de destinație.`;
+  $("move-title").textContent = mode === "copy" ? "Copiază elementele selectate" : "Mută elementele selectate";
+  $("move-description").textContent = `${selected.length} ${selected.length === 1 ? "element selectat" : "elemente selectate"}. Alege folderul de destinație.${mode === "copy" ? " Dacă numele există deja, se creează automat o copie cu nume nou." : ""}`;
+  $("move-confirm").textContent = mode === "copy" ? "Copiază" : "Mută";
   $("move-confirm").disabled = candidates.length === 0;
   if (!candidates.length) {
     const option = document.createElement("option");
@@ -701,7 +912,7 @@ async function openMoveDialog() {
 }
 
 async function moveSelected() {
-  const sources = [...state.selected];
+  const sources = topLevelPaths([...state.selected]);
   if (!sources.length) return;
   try {
     const result = await api("/api/move", {
@@ -712,6 +923,26 @@ async function moveSelected() {
     toast(`${result.moved} ${result.moved === 1 ? "element mutat" : "elemente mutate"}.`);
     await navigate();
   } catch (error) { toast(error.message, true); }
+}
+
+async function copySelected() {
+  const sources = topLevelPaths([...state.selected]);
+  if (!sources.length) return;
+  try {
+    const result = await api("/api/copy", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sources, destination: $("move-destination").value }),
+    });
+    closeMoveDialog();
+    state.selected.clear();
+    toast(`${result.copied} ${result.copied === 1 ? "element copiat" : "elemente copiate"}.`);
+    await navigate();
+    await refreshUsage();
+  } catch (error) { toast(error.message, true); }
+}
+
+function confirmTargetAction() {
+  if (state.targetAction === "copy") void copySelected(); else void moveSelected();
 }
 
 function transferItem(kind, name, total = 0) {
@@ -964,7 +1195,7 @@ async function startDownload(rel, entry) {
 }
 
 async function downloadSelected() {
-  const paths = [...state.selected];
+  const paths = topLevelPaths([...state.selected]);
   if (!paths.length) return;
   await downloadRequest((signal) => fetch("/api/download-selected", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -987,22 +1218,57 @@ $("back-folder").addEventListener("click", navigateBack);
 $("empty-upload").addEventListener("click", () => $("file-input").click());
 $("file-input").addEventListener("change", (event) => { void uploadFiles(event.target.files); event.target.value = ""; });
 $("folder-input").addEventListener("change", (event) => { void uploadFiles(event.target.files, true); event.target.value = ""; });
-$("all-files").addEventListener("click", () => navigate(""));
-$("search").addEventListener("input", (event) => { state.query = event.target.value; renderEntries(); });
+$("all-files").addEventListener("click", () => {
+  state.globalSearch = false;
+  state.globalResults = [];
+  state.query = "";
+  state.searchToken += 1;
+  $("search").value = "";
+  updateSearchScope();
+  void navigate("");
+});
+$("search").addEventListener("input", (event) => {
+  state.query = event.target.value;
+  state.selected.clear();
+  state.lastSelectedPath = null;
+  state.searchToken += 1;
+  clearTimeout(state.searchTimer);
+  $("loading-state").hidden = true;
+  if (!state.globalSearch) { renderEntries(); return; }
+  state.globalResults = [];
+  renderEntries();
+  state.searchTimer = setTimeout(() => { void runGlobalSearch(); }, 240);
+});
+$("search-scope").addEventListener("click", () => {
+  state.globalSearch = !state.globalSearch;
+  state.globalResults = [];
+  state.selected.clear();
+  state.lastSelectedPath = null;
+  state.searchToken += 1;
+  clearTimeout(state.searchTimer);
+  updateSearchScope();
+  renderEntries();
+  if (state.globalSearch) void runGlobalSearch();
+});
 $("sort").addEventListener("change", (event) => { state.sort = event.target.value; renderEntries(); });
 $("select-all").addEventListener("change", (event) => {
   for (const entry of visibleEntries()) {
-    const rel = pathFor(entry.name);
+    const rel = entryPath(entry);
     if (event.target.checked) state.selected.add(rel); else state.selected.delete(rel);
   }
   renderEntries();
 });
 $("delete-selected").addEventListener("click", deleteSelected);
 $("download-selected").addEventListener("click", downloadSelected);
-$("move-selected").addEventListener("click", () => { void openMoveDialog().catch((error) => toast(error.message, true)); });
+$("move-selected").addEventListener("click", () => { void openTargetDialog("move").catch((error) => toast(error.message, true)); });
 $("move-cancel").addEventListener("click", closeMoveDialog);
-$("move-confirm").addEventListener("click", moveSelected);
+$("move-confirm").addEventListener("click", confirmTargetAction);
 $("move-dialog").addEventListener("click", (event) => { if (event.target === $("move-dialog")) closeMoveDialog(); });
+document.addEventListener("pointerdown", (event) => { if (!event.target.closest("#context-menu")) closeContextMenu(); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeContextMenu(); });
+window.addEventListener("resize", closeContextMenu);
+window.addEventListener("scroll", closeContextMenu, true);
+$("context-menu").addEventListener("contextmenu", (event) => event.preventDefault());
 $("play-media").addEventListener("click", playAllMedia);
 $("preview-close").addEventListener("click", closePreview);
 $("preview-modal").addEventListener("click", (event) => { if (event.target === $("preview-modal")) closePreview(); });
@@ -1084,6 +1350,7 @@ $("readme-open").addEventListener("click", () => { void openReadme(); });
 $("readme-close").addEventListener("click", () => { $("readme-modal").hidden = true; });
 $("readme-modal").addEventListener("click", (event) => { if (event.target === $("readme-modal")) $("readme-modal").hidden = true; });
 
+updateSearchScope();
 setTheme(localStorage.getItem("file-server-theme-v2") || "dark");
 renderTransfers();
 navigate("");
