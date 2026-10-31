@@ -42,11 +42,11 @@ https://github.com/vlad2939/home-assistant-addons
 | --- | --- | --- | --- | --- | --- | --- |
 | Car Cost Dashboard | `car-cost-dashboard` | `car_cost_dashboard` | `1.5.8` | Da | `3000` | Stabil |
 | Home Cost Dashboard | `home-cost-dashboard` | `homecost` | `2026.8.0` | Da | `3000` | Stabil |
+| TubeDash | `tubedash-addon` | `tubedash` | `5.0.7` | Da | `3000` | Stabil |
 | Full Web Server | `ha-webserver` | `full_web_server` | `1.0.4` | Da | `80` | Stabil |
 | WordPress Full Option | `ha-wordpress-addon` | `wordpress_full` | `1.0.2` | Nu | `80` | Stabil |
 | MyTube Playlist | `mytubeplaylist-addon` | `mytubeplaylist` | `2.0.0` | Da | `3000` | Stabil |
 | YT Downloader | `yt-downloader-addon` | `yt_downloader` | `4.0.4` | Da | `3000` | Stabil |
-| MyTube Dash | `mytubedash-addon` | `mytubedash` | `3.0.1` | Da | `3000` | Stabil |
 | Gustos | `gustos` | `gustos` | `2.0.1` | Nu | `8099` | Stabil |
 | File Server | `file_server` | `file_server` | `2.1.0` | Nu | `8085` | Nou |
 
@@ -87,6 +87,21 @@ Detalii:
 - port extern implicit: `3040`;
 - date aplicație: `app/database.json`;
 - fișiere principale: `app/`, `rootfs/`, `Dockerfile`.
+
+### TubeDash
+
+Aplicație HTML/CSS/JavaScript servită prin NGINX, destinată organizării și vizualizării conținutului YouTube într-un mediu controlat.
+
+Detalii:
+
+- folder: `tubedash-addon`;
+- slug: `tubedash`;
+- versiune: `5.0.2`;
+- ingress: activ;
+- port intern: `3000`;
+- fișiere principale: `index.html`, `style.css`, `app.js`, `data.json`.
+
+Notă: acest add-on a primit slug-ul `tubedash` pentru a evita conflictul cu `mytubedash-addon`.
 
 ### Full Web Server
 
@@ -154,19 +169,6 @@ Detalii:
 - port extern implicit: `3000`;
 - fișiere principale: `src/`, `public/`, `package.json`, `Dockerfile`.
 
-### MyTube Dash
-
-Aplicație HTML/CSS/JavaScript servită prin NGINX pentru dashboard YouTube. Rămâne separată de `TubeDash` și păstrează slug-ul original `mytubedash`.
-
-Detalii:
-
-- folder: `mytubedash-addon`;
-- slug: `mytubedash`;
-- versiune: `2.0.5`;
-- ingress: activ;
-- port intern: `3000`;
-- fișiere principale: `index.html`, `style.css`, `app.js`.
-
 ### Gustos
 
 Aplicație web pentru organizarea rețetelor culinare, cu import și traducere de rețete, meniuri săptămânale, listă de cumpărături și funcții de backup și restaurare. Interfața se accesează în rețeaua locală prin portul mapat.
@@ -217,6 +219,11 @@ home-assistant-addons/
     Dockerfile
     ...
 
+  tubedash-addon/
+    config.yaml
+    Dockerfile
+    ...
+
   ha-webserver/
     config.yaml
     Dockerfile
@@ -233,11 +240,6 @@ home-assistant-addons/
     ...
 
   yt-downloader-addon/
-    config.yaml
-    Dockerfile
-    ...
-
-  mytubedash-addon/
     config.yaml
     Dockerfile
     ...
