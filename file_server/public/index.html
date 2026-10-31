@@ -159,6 +159,25 @@
       <div class="dialog-actions"><button class="button secondary" id="move-cancel" type="button">Anulează</button><button class="button primary" id="move-confirm" type="button">Mută</button></div>
     </section>
   </div>
+  <div id="rename-dialog" class="dialog-backdrop" role="presentation" hidden>
+    <section class="move-dialog" role="dialog" aria-modal="true" aria-labelledby="rename-title">
+      <h2 id="rename-title">Redenumește elementul</h2>
+      <p id="rename-description">Alege un nume nou.</p>
+      <label for="rename-input">Noul nume</label>
+      <input id="rename-input" type="text" autocomplete="off" spellcheck="false">
+      <p id="rename-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button secondary" id="rename-cancel" type="button">Anulează</button><button class="button primary" id="rename-confirm" type="button">Salvează</button></div>
+    </section>
+  </div>
+  <div id="delete-dialog" class="dialog-backdrop" role="presentation" hidden>
+    <section class="move-dialog delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+      <h2 id="delete-title">Șterge elementul</h2>
+      <p id="delete-description">Acțiunea nu poate fi anulată.</p>
+      <ul id="delete-list" class="delete-list"></ul>
+      <p id="delete-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button secondary" id="delete-cancel" type="button">Anulează</button><button class="button danger-button solid" id="delete-confirm" type="button">Șterge definitiv</button></div>
+    </section>
+  </div>
   <div id="logo-lightbox" class="logo-lightbox" role="dialog" aria-modal="true" aria-label="Logo File Server" hidden><img src="/logo.png" alt="Logo File Server"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

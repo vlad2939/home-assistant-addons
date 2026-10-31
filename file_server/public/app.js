@@ -5,6 +5,7 @@ const state = {
   path: "", entries: [], selected: new Set(), sort: "name", descending: false,
   view: "list", query: "", globalSearch: false, globalResults: [], searchToken: 0, searchTimer: null,
   lastSelectedPath: null, targetAction: "move", contextMenuEntry: null,
+  pendingRename: null, pendingDelete: [],
   toastTimer: null, transfers: new Map(), transferId: 0,
   transferFrame: 0,
   previewItem: null, audioItem: null, mediaPlaylist: [], mediaIndex: -1,
@@ -734,7 +735,7 @@ function openContextMenu(event, entry, rel) {
     addContextMenuItem(`Șterge selectatele (${selectedPaths.length})`, deleteSelected, { danger: true, shortcut: "Delete" });
   }
   addContextSeparator();
-  addContextMenuItem("Selectează toate rezultatele", () => {
+  addContextMenuItem("Selectează tot", () => {
     for (const item of visibleEntries()) state.selected.add(entryPath(item));
     renderSelection();
   });
@@ -839,38 +840,115 @@ async function createFolder() {
   } catch (error) { toast(error.message, true); }
 }
 
-async function renameEntry(rel, entry) {
-  const name = prompt("Noul nume:", entry.name);
-  if (name === null || !name.trim() || name.trim() === entry.name) return;
+function closeRenameDialog() {
+  $("rename-dialog").hidden = true;
+  state.pendingRename = null;
+}
+
+function renameEntry(rel, entry) {
+  state.pendingRename = { rel, entry };
+  $("rename-description").textContent = entry.type === "folder" ? "Introdu numele nou pentru folder." : "Introdu numele nou pentru fișier.";
+  $("rename-input").value = entry.name;
+  $("rename-error").hidden = true;
+  $("rename-error").textContent = "";
+  $("rename-dialog").hidden = false;
+  $("rename-input").focus();
+  $("rename-input").select();
+}
+
+async function confirmRename() {
+  if (!state.pendingRename) return;
+  const { rel, entry } = state.pendingRename;
+  const name = $("rename-input").value.trim();
+  const error = $("rename-error");
+  if (!name) { error.textContent = "Numele nu poate fi gol."; error.hidden = false; return; }
+  if (name === entry.name) { closeRenameDialog(); return; }
+  const button = $("rename-confirm");
+  button.disabled = true;
+  error.hidden = true;
   try {
-    await api("/api/rename", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: rel, name: name.trim() }) });
+    await api("/api/rename", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: rel, name }) });
+    closeRenameDialog();
     state.selected.delete(rel);
     toast("Elementul a fost redenumit.");
     await navigate();
-  } catch (error) { toast(error.message, true); }
+  } catch (requestError) {
+    error.textContent = requestError.message;
+    error.hidden = false;
+  } finally { button.disabled = false; }
 }
 
-async function remove(rel, entry) {
-  const subject = entry.type === "folder" ? `folderul „${entry.name}” și tot conținutul lui` : `fișierul „${entry.name}”`;
-  if (!confirm(`Ștergi ${subject}? Acțiunea nu poate fi anulată.`)) return;
-  try {
-    await api(`/api/delete?path=${encodeURIComponent(rel)}`, { method: "DELETE" });
-    state.selected.delete(rel);
-    toast("Elementul a fost șters.");
-    await navigate();
-    await refreshUsage();
-  } catch (error) { toast(error.message, true); }
+function closeDeleteDialog() {
+  $("delete-dialog").hidden = true;
+  state.pendingDelete = [];
 }
 
-async function deleteSelected() {
-  const paths = topLevelPaths([...state.selected]);
-  if (!paths.length || !confirm(`Ștergi definitiv cele ${paths.length} elemente selectate?`)) return;
-  let removed = 0;
-  for (const rel of paths) {
-    try { await api(`/api/delete?path=${encodeURIComponent(rel)}`, { method: "DELETE" }); removed += 1; }
-    catch (error) { toast(`${rel}: ${error.message}`, true); }
+function openDeleteDialog(items) {
+  state.pendingDelete = items;
+  const list = $("delete-list");
+  list.replaceChildren();
+  for (const item of items.slice(0, 8)) {
+    const row = document.createElement("li");
+    row.textContent = item.entry?.name || item.rel.split("/").pop();
+    list.append(row);
   }
-  toast(`${removed} ${removed === 1 ? "element șters" : "elemente șterse"}.`);
+  if (items.length > 8) {
+    const more = document.createElement("li");
+    more.textContent = `și încă ${items.length - 8} elemente`;
+    list.append(more);
+  }
+  if (items.length === 1) {
+    const entry = items[0].entry;
+    $("delete-title").textContent = entry?.type === "folder" ? "Șterge folderul" : "Șterge fișierul";
+    $("delete-description").textContent = entry?.type === "folder"
+      ? "Folderul și tot conținutul lui vor fi șterse definitiv. Acțiunea nu poate fi anulată."
+      : "Fișierul va fi șters definitiv. Acțiunea nu poate fi anulată.";
+  } else {
+    $("delete-title").textContent = `Șterge ${items.length} elemente`;
+    const containsFolder = items.some((item) => item.entry?.type === "folder");
+    $("delete-description").textContent = containsFolder
+      ? "Folderele selectate și tot conținutul lor vor fi șterse definitiv. Acțiunea nu poate fi anulată."
+      : "Elementele selectate vor fi șterse definitiv. Acțiunea nu poate fi anulată.";
+  }
+  $("delete-error").hidden = true;
+  $("delete-error").textContent = "";
+  $("delete-confirm").disabled = false;
+  $("delete-cancel").disabled = false;
+  $("delete-dialog").hidden = false;
+  $("delete-cancel").focus();
+}
+
+function remove(rel, entry) {
+  openDeleteDialog([{ rel, entry }]);
+}
+
+function deleteSelected() {
+  const paths = topLevelPaths([...state.selected]);
+  if (!paths.length) return;
+  const items = paths.map((rel) => ({ rel, entry: selectedEntryForPath(rel) }));
+  openDeleteDialog(items);
+}
+
+async function confirmDelete() {
+  const items = state.pendingDelete;
+  if (!items.length) return;
+  const confirmButton = $("delete-confirm");
+  confirmButton.disabled = true;
+  $("delete-cancel").disabled = true;
+  $("delete-error").hidden = true;
+  let removed = 0;
+  const errors = [];
+  for (const item of items) {
+    try {
+      await api(`/api/delete?path=${encodeURIComponent(item.rel)}`, { method: "DELETE" });
+      removed += 1;
+    } catch (error) { errors.push(`${item.entry?.name || item.rel}: ${error.message}`); }
+  }
+  closeDeleteDialog();
+  $("delete-cancel").disabled = false;
+  state.selected.clear();
+  if (errors.length) toast(`${removed} șterse. ${errors.join("; ")}`, true);
+  else toast(`${removed} ${removed === 1 ? "element șters" : "elemente șterse"}.`);
   await navigate();
   await refreshUsage();
 }
@@ -1264,6 +1342,13 @@ $("move-selected").addEventListener("click", () => { void openTargetDialog("move
 $("move-cancel").addEventListener("click", closeMoveDialog);
 $("move-confirm").addEventListener("click", confirmTargetAction);
 $("move-dialog").addEventListener("click", (event) => { if (event.target === $("move-dialog")) closeMoveDialog(); });
+$("rename-cancel").addEventListener("click", closeRenameDialog);
+$("rename-confirm").addEventListener("click", confirmRename);
+$("rename-input").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); void confirmRename(); } });
+$("rename-dialog").addEventListener("click", (event) => { if (event.target === $("rename-dialog")) closeRenameDialog(); });
+$("delete-cancel").addEventListener("click", closeDeleteDialog);
+$("delete-confirm").addEventListener("click", confirmDelete);
+$("delete-dialog").addEventListener("click", (event) => { if (event.target === $("delete-dialog") && !$("delete-confirm").disabled) closeDeleteDialog(); });
 document.addEventListener("pointerdown", (event) => { if (!event.target.closest("#context-menu")) closeContextMenu(); });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeContextMenu(); });
 window.addEventListener("resize", closeContextMenu);
@@ -1341,7 +1426,7 @@ $("mobile-menu").addEventListener("click", () => { $("sidebar").classList.add("o
 $("sidebar-close").addEventListener("click", closeSidebar);
 $("sidebar-scrim").addEventListener("click", closeSidebar);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; $("readme-modal").hidden = true; closeMoveDialog(); closePreview(); }
+  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; $("readme-modal").hidden = true; closeMoveDialog(); closeRenameDialog(); closeDeleteDialog(); closePreview(); }
 });
 
 $("logo-open").addEventListener("click", () => { $("logo-lightbox").hidden = false; });
