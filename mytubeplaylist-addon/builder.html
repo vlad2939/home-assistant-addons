@@ -1220,18 +1220,43 @@
     addVideoModal.classList.remove('open');
   }
 
+  /** Normalizează formatele uzuale de link YouTube la URL-ul watch canonic. */
+  function normalizeYouTubeVideoUrl(value) {
+    const input = value.trim();
+    if (!input) return null;
+
+    try {
+      const parsed = new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`);
+      const host = parsed.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+      let videoId = null;
+
+      if (host === 'youtu.be') {
+        videoId = parsed.pathname.split('/').filter(Boolean)[0];
+      } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+        const parts = parsed.pathname.split('/').filter(Boolean);
+        if (parsed.pathname === '/watch') videoId = parsed.searchParams.get('v');
+        else if (['shorts', 'embed', 'live', 'v'].includes(parts[0])) videoId = parts[1];
+      }
+
+      return videoId && /^[\w-]{11}$/.test(videoId)
+        ? `https://www.youtube.com/watch?v=${videoId}`
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
   function handleConfirmAddVideo() {
     const title    = manualTitle.value.trim();
-    const url      = manualUrl.value.trim();
+    const url      = normalizeYouTubeVideoUrl(manualUrl.value);
     const duration = manualDuration.value.trim() || '0:00';
     const pi       = parseInt(manualPlaylistSelect.value);
 
     if (!title) { manualTitle.focus(); showToast('Introdu un titlu.', 'warn'); return; }
-    if (!url)   { manualUrl.focus();   showToast('Introdu un URL YouTube.', 'warn'); return; }
-
-    // Validare URL minim
-    if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
-      showToast('URL-ul nu pare a fi YouTube.', 'warn');
+    if (!manualUrl.value.trim()) { manualUrl.focus(); showToast('Introdu un URL YouTube.', 'warn'); return; }
+    if (!url) {
+      manualUrl.focus();
+      showToast('Introdu un link YouTube valid (watch, youtu.be, Shorts, embed sau live).', 'warn');
       return;
     }
 
