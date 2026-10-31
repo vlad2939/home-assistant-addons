@@ -20,7 +20,8 @@ http://IP-UL-HOME-ASSISTANT:8085
 
 - Navighează prin directoare, folosește breadcrumb-ul sau butonul **Back** pentru a urca spre rădăcină.
 - Încarcă unul sau mai multe fișiere, ori un folder întreg din Chrome.
-- Creează directoare, mută selecții în alte directoare și descarcă fișiere sau arhive ZIP.
+- Creează directoare dintr-un dialog integrat, mută selecții în alte directoare și descarcă fișiere sau arhive ZIP.
+- Redenumește elementul selectat din bara de acțiuni, din meniul contextual sau cu `F2`.
 - Redenumește fișiere și foldere dintr-un dialog integrat în aplicație, din meniul contextual sau cu `F2`.
 - Copiază unul sau mai multe elemente într-un folder existent. Dacă un nume este deja folosit, se creează automat o copie cu sufixul `(copie)`.
 - Șterge fișiere și foldere cu un dialog de confirmare integrat; la ștergerea unui folder, dialogul precizează că va fi eliminat și conținutul lui. La încărcarea peste un fișier existent, aplicația cere confirmarea înlocuirii.
@@ -75,7 +76,7 @@ Limita de stocare este verificată de server la încărcare. Linkurile simbolice
 
 ## Detalii tehnice
 
-- **Versiune:** `2.4.0`
+- **Versiune:** `2.5.0`
 - **Port:** `8085/tcp`
 - **Arhitectură:** `amd64`
 - **Director persistent:** `/share/file_server`
