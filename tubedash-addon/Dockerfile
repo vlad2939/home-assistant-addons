@@ -8,7 +8,7 @@ RUN sed -i 's/listen  *80;/listen 3000;/g' /etc/nginx/conf.d/default.conf
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copiem doar fisierele create
-COPY index.html style.css app.js data.json README.md /usr/share/nginx/html/
+COPY index.html style.css app.js data.json README.md icon.png /usr/share/nginx/html/
 
 # Port exposure
 EXPOSE 3000
