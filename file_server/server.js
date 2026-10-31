@@ -14,6 +14,18 @@ const MAX_STORAGE_BYTES = 15 * 1024 ** 3;
 let reservedQuotaBytes = 0;
 let quotaQueue = Promise.resolve();
 let mutationQueue = Promise.resolve();
+const largeDownloads = new Map();
+
+function finishLargeDownload(id, status, error = "") {
+  if (!id) return;
+  const job = largeDownloads.get(id);
+  if (!job || job.status !== "active") return;
+  job.status = status;
+  job.error = error;
+  job.updatedAt = Date.now();
+  const cleanup = setTimeout(() => largeDownloads.delete(id), 5 * 60 * 1000);
+  cleanup.unref?.();
+}
 
 fs.mkdirSync(ROOT, { recursive: true });
 
@@ -191,6 +203,14 @@ async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   try {
     if (url.pathname.startsWith("/api/")) {
+      if (req.method === "GET" && url.pathname === "/api/download-status") {
+        const id = String(url.searchParams.get("id") || "");
+        if (!/^[a-zA-Z0-9_-]{8,100}$/.test(id)) return send(res, 400, { error: "Identificator de transfer invalid." });
+        const job = largeDownloads.get(id);
+        if (!job) return send(res, 404, { error: "Transferul nu a fost găsit." });
+        return send(res, 200, { status: job.status, loaded: job.loaded, total: job.total, error: job.error });
+      }
+
       if (["GET", "HEAD"].includes(req.method) && url.pathname === "/api/preview") {
         const rel = relativePath(url.searchParams.get("path"));
         if (!rel) throw Object.assign(new Error("Selectează un fișier pentru previzualizare."), { status: 400 });
@@ -395,6 +415,8 @@ async function handle(req, res) {
       }
 
       if (req.method === "GET" && url.pathname === "/api/download") {
+        const transferId = String(url.searchParams.get("transfer") || "");
+        const tracked = /^[a-zA-Z0-9_-]{8,100}$/.test(transferId);
         const rel = relativePath(url.searchParams.get("path"));
         if (!rel) throw Object.assign(new Error("Selectează un fișier sau folder."), { status: 400 });
         const target = await checkedTarget(rel);
@@ -403,13 +425,25 @@ async function handle(req, res) {
         if (stat.isDirectory()) {
           return streamZip(res, target, ["."], `${name}.zip`);
         }
+        const job = tracked ? { status: "active", loaded: 0, total: stat.size, error: "", updatedAt: Date.now() } : null;
+        if (job) largeDownloads.set(transferId, job);
         res.writeHead(200, {
           "Content-Type": "application/octet-stream",
           "Content-Length": stat.size,
           "Content-Disposition": encodeDisposition(name),
           "X-Content-Type-Options": "nosniff",
         });
-        return fs.createReadStream(target).pipe(res);
+        const stream = fs.createReadStream(target);
+        stream.on("data", (chunk) => { if (job) { job.loaded += chunk.length; job.updatedAt = Date.now(); } });
+        stream.on("error", (error) => {
+          finishLargeDownload(transferId, "error", error.message);
+          res.destroy(error);
+        });
+        res.on("finish", () => finishLargeDownload(transferId, "done"));
+        res.on("close", () => {
+          if (!res.writableFinished) finishLargeDownload(transferId, "cancelled");
+        });
+        return stream.pipe(res);
       }
 
       if (req.method === "DELETE" && url.pathname === "/api/delete") {
