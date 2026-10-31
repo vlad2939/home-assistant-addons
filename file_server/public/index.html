@@ -47,7 +47,7 @@
         <span class="storage-foot"><span class="online-dot"></span> Conectat</span>
       </div>
 
-      <div class="sidebar-footer">© concept și realizare vlad39</div>
+      <button class="sidebar-footer" id="readme-open" type="button" title="Despre File Server">© concept și realizare vlad39</button>
     </aside>
 
     <main class="main-panel">
@@ -115,7 +115,7 @@
         <div class="preview-tools">
           <button class="preview-nav" id="preview-previous" type="button" aria-label="Elementul anterior" title="Anterior">‹</button>
           <button class="preview-nav" id="preview-next" type="button" aria-label="Elementul următor" title="Următor">›</button>
-          <a class="preview-download" id="preview-download" href="#" title="Descarcă" aria-label="Descarcă fișierul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg></a>
+          <a class="preview-download" id="preview-download" href="#" title="Descarcă" aria-label="Descarcă fișierul"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg><span>Descarcă</span></a>
           <button class="preview-close" id="preview-close" type="button" aria-label="Închide previzualizarea">×</button>
         </div>
       </header>
@@ -133,6 +133,12 @@
         <pre id="preview-text" class="preview-text" hidden></pre>
         <div id="preview-unsupported" class="preview-unsupported" hidden></div>
       </div>
+    </section>
+  </div>
+  <div id="readme-modal" class="readme-overlay" role="dialog" aria-modal="true" aria-labelledby="readme-title" hidden>
+    <section class="readme-dialog">
+      <header class="preview-header"><div class="preview-title"><span>DOCUMENTAȚIE</span><strong id="readme-title">File Server · Ghid de utilizare</strong></div><button class="preview-close" id="readme-close" type="button" aria-label="Închide ghidul">×</button></header>
+      <article id="readme-content" class="readme-content" aria-live="polite"><p>Se încarcă documentația…</p></article>
     </section>
   </div>
   <aside id="mini-audio-player" class="mini-audio-player" aria-label="Mini-player audio" hidden>

@@ -147,8 +147,7 @@ function previewType(name) {
 function previewUrl(rel) { return `/api/preview?path=${encodeURIComponent(rel)}`; }
 
 function openPreview(rel, entry, keepPlaylist = false) {
-  const kind = previewType(entry.name);
-  if (!kind) return;
+  const kind = previewType(entry.name) || "unsupported";
   const item = { ...entry, path: rel, kind };
   if (!keepPlaylist) {
     state.playAllActive = false;
@@ -184,7 +183,7 @@ function showPreview(item) {
   const audioIsPlaying = !audio.paused && Boolean(audio.currentSrc);
   $("mini-audio-player").hidden = item.kind === "audio" || !audioIsPlaying;
   $("preview-filename").textContent = item.name;
-  $("preview-kind").textContent = ({ image: "Imagine", video: "Video", audio: "Audio", pdf: "Document PDF", text: "Text / cod" })[item.kind] || "Previzualizare";
+  $("preview-kind").textContent = ({ image: "Imagine", video: "Video", audio: "Audio", pdf: "Document PDF", text: "Text / cod", unsupported: "Fișier fără preview" })[item.kind] || "Previzualizare";
   $("preview-download").href = `/api/download?path=${encodeURIComponent(item.path)}`;
   $("preview-download").download = item.name;
   const hasImageQueue = item.kind === "image" && state.imagePlaylist.length > 1;
@@ -193,6 +192,9 @@ function showPreview(item) {
   $("preview-previous").hidden = !(hasImageQueue || hasDocumentQueue || hasMediaQueue);
   $("preview-next").hidden = !(hasImageQueue || hasDocumentQueue || hasMediaQueue);
   $("image-controls").hidden = item.kind !== "image";
+  const unsupported = $("preview-unsupported");
+  unsupported.hidden = true;
+  unsupported.replaceChildren();
   for (const element of [image, video, pdf, text]) element.hidden = true;
   if (item.kind !== "audio") audio.hidden = true;
   if (item.kind !== "video") { video.pause(); video.removeAttribute("src"); video.load(); }
@@ -225,7 +227,7 @@ function showPreview(item) {
   } else if (item.kind === "pdf") {
     pdf.src = url;
     pdf.hidden = false;
-  } else {
+  } else if (item.kind === "text") {
     text.textContent = "Se încarcă documentul…";
     text.hidden = false;
     fetch(url).then((response) => {
@@ -236,6 +238,14 @@ function showPreview(item) {
     }).catch((error) => {
       if (state.previewItem?.path === item.path) text.textContent = `Documentul nu a putut fi citit: ${error.message}`;
     });
+  } else {
+    const extension = item.name.includes(".") ? item.name.split(".").pop().toUpperCase() : "necunoscut";
+    const heading = document.createElement("strong");
+    heading.textContent = "Previzualizarea nu este disponibilă";
+    const message = document.createElement("p");
+    message.textContent = `Chrome nu poate afișa acest tip de fișier (${extension}). Îl poți descărca folosind butonul „Descarcă” din partea de sus.`;
+    unsupported.append(heading, message);
+    unsupported.hidden = false;
   }
 }
 
@@ -292,6 +302,114 @@ function playAllMedia() {
   state.mediaIndex = 0;
   state.playAllActive = true;
   showPreview(state.mediaPlaylist[0]);
+}
+
+function appendMarkdownInline(parent, value) {
+  const pattern = /\*\*([^*]+)\*\*|`([^`]+)`|\[([^\]]+)\]\(([^)]+)\)/g;
+  let cursor = 0;
+  for (const match of value.matchAll(pattern)) {
+    const index = match.index ?? 0;
+    if (index > cursor) parent.append(document.createTextNode(value.slice(cursor, index)));
+    if (match[1]) {
+      const strong = document.createElement("strong");
+      strong.textContent = match[1];
+      parent.append(strong);
+    } else if (match[2]) {
+      const code = document.createElement("code");
+      code.textContent = match[2];
+      parent.append(code);
+    } else {
+      const label = match[3];
+      const href = match[4];
+      if (/^(https?:\/\/|\/)/i.test(href)) {
+        const link = document.createElement("a");
+        link.href = href;
+        link.textContent = label;
+        if (/^https?:\/\//i.test(href)) { link.target = "_blank"; link.rel = "noopener noreferrer"; }
+        parent.append(link);
+      } else parent.append(document.createTextNode(label));
+    }
+    cursor = index + match[0].length;
+  }
+  if (cursor < value.length) parent.append(document.createTextNode(value.slice(cursor)));
+}
+
+function renderReadme(markdown) {
+  const target = $("readme-content");
+  target.replaceChildren();
+  const lines = markdown.replace(/\r/g, "").split("\n");
+  for (let index = 0; index < lines.length;) {
+    const line = lines[index].trim();
+    if (!line) { index += 1; continue; }
+    if (line.startsWith("```")) {
+      index += 1;
+      const codeLines = [];
+      while (index < lines.length && !lines[index].trim().startsWith("```")) codeLines.push(lines[index++]);
+      if (index < lines.length) index += 1;
+      const pre = document.createElement("pre");
+      const code = document.createElement("code");
+      code.textContent = codeLines.join("\n");
+      pre.append(code);
+      target.append(pre);
+      continue;
+    }
+    const heading = /^(#{1,3})\s+(.+)$/.exec(line);
+    if (heading) {
+      const element = document.createElement(`h${heading[1].length}`);
+      appendMarkdownInline(element, heading[2]);
+      target.append(element);
+      index += 1;
+      continue;
+    }
+    if (/^[-*_]{3,}$/.test(line)) { target.append(document.createElement("hr")); index += 1; continue; }
+    if (/^>\s?/.test(line)) {
+      const quote = document.createElement("blockquote");
+      while (index < lines.length && /^>\s?/.test(lines[index].trim())) {
+        const paragraph = document.createElement("p");
+        appendMarkdownInline(paragraph, lines[index++].trim().replace(/^>\s?/, ""));
+        quote.append(paragraph);
+      }
+      target.append(quote);
+      continue;
+    }
+    const listMatch = /^([-*+]\s+|\d+\.\s+)/.exec(line);
+    if (listMatch) {
+      const ordered = /^\d/.test(listMatch[0]);
+      const list = document.createElement(ordered ? "ol" : "ul");
+      while (index < lines.length) {
+        const itemMatch = /^\s*([-*+]\s+|\d+\.\s+)(.+)$/.exec(lines[index]);
+        if (!itemMatch || /^\d/.test(itemMatch[1]) !== ordered) break;
+        const item = document.createElement("li");
+        appendMarkdownInline(item, itemMatch[2]);
+        list.append(item);
+        index += 1;
+      }
+      target.append(list);
+      continue;
+    }
+    const paragraphLines = [line];
+    index += 1;
+    while (index < lines.length && lines[index].trim() && !/^(#{1,3}\s|```|>|[-*+]\s+|\d+\.\s+)/.test(lines[index].trim())) {
+      paragraphLines.push(lines[index++].trim());
+    }
+    const paragraph = document.createElement("p");
+    appendMarkdownInline(paragraph, paragraphLines.join(" "));
+    target.append(paragraph);
+  }
+}
+
+async function openReadme() {
+  const modal = $("readme-modal");
+  const content = $("readme-content");
+  modal.hidden = false;
+  content.textContent = "Se încarcă documentația…";
+  try {
+    const response = await fetch("/api/readme", { cache: "no-store" });
+    if (!response.ok) throw new Error(`Eroare HTTP ${response.status}`);
+    renderReadme(await response.text());
+  } catch (error) {
+    content.textContent = `Documentația nu a putut fi încărcată: ${error.message}`;
+  }
 }
 
 function formatMediaTime(seconds) {
@@ -429,7 +547,7 @@ function renderEntries() {
     row.addEventListener("dblclick", (event) => {
       if (event.target.closest(".row-actions, .row-check")) return;
       if (entry.type === "folder") navigate(rel);
-      else if (isPreviewable(entry.name)) openPreview(rel, entry);
+      else openPreview(rel, entry);
     });
     list.append(row);
 
@@ -457,10 +575,10 @@ function renderEntries() {
     cardName.className = "card-file-name";
     cardName.textContent = entry.name;
     cardName.title = entry.name;
-    cardName.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : isPreviewable(entry.name) ? `${entry.name} — dublu-click pentru previzualizare în Chrome` : entry.name;
+    cardName.title = entry.type === "folder" ? `${entry.name} — dublu-click pentru deschidere` : `${entry.name} — dublu-click pentru previzualizare sau detalii`;
     if (entry.type === "folder") {
       cardName.addEventListener("keydown", (event) => { if (event.key === "Enter") navigate(rel); });
-    } else if (isPreviewable(entry.name)) {
+    } else {
       cardName.addEventListener("keydown", (event) => { if (event.key === "Enter") openPreview(rel, entry); });
     }
     const cardMeta = document.createElement("span");
@@ -470,7 +588,7 @@ function renderEntries() {
     card.addEventListener("dblclick", (event) => {
       if (event.target.closest(".row-actions, .row-check")) return;
       if (entry.type === "folder") navigate(rel);
-      else if (isPreviewable(entry.name)) openPreview(rel, entry);
+      else openPreview(rel, entry);
     });
     $("grid-list").append(card);
   }
@@ -957,11 +1075,14 @@ $("mobile-menu").addEventListener("click", () => { $("sidebar").classList.add("o
 $("sidebar-close").addEventListener("click", closeSidebar);
 $("sidebar-scrim").addEventListener("click", closeSidebar);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; closeMoveDialog(); closePreview(); }
+  if (event.key === "Escape") { closeSidebar(); $("logo-lightbox").hidden = true; $("readme-modal").hidden = true; closeMoveDialog(); closePreview(); }
 });
 
 $("logo-open").addEventListener("click", () => { $("logo-lightbox").hidden = false; });
 $("logo-lightbox").addEventListener("click", () => { $("logo-lightbox").hidden = true; });
+$("readme-open").addEventListener("click", () => { void openReadme(); });
+$("readme-close").addEventListener("click", () => { $("readme-modal").hidden = true; });
+$("readme-modal").addEventListener("click", (event) => { if (event.target === $("readme-modal")) $("readme-modal").hidden = true; });
 
 setTheme(localStorage.getItem("file-server-theme-v2") || "dark");
 renderTransfers();
