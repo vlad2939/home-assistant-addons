@@ -159,6 +159,77 @@ async function listFolders(directory = "", folders = []) {
   return folders;
 }
 
+async function searchEntries(query, maximum = 1000) {
+  const needle = query.toLocaleLowerCase("ro");
+  const found = [];
+  async function visit(directory = "") {
+    const target = await checkedTarget(directory);
+    const entries = await fs.promises.readdir(target, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isSymbolicLink() || /^\.upload-[a-f0-9]{16}$/.test(entry.name)) continue;
+      const rel = [directory, entry.name].filter(Boolean).join("/");
+      const full = path.join(target, entry.name);
+      const stat = await fs.promises.lstat(full);
+      if (stat.isSymbolicLink()) continue;
+      const type = stat.isDirectory() ? "folder" : stat.isFile() ? "file" : "other";
+      if (type !== "other" && entry.name.toLocaleLowerCase("ro").includes(needle)) {
+        found.push({ name: entry.name, path: rel, type, size: type === "file" ? stat.size : null, modified: stat.mtime.toISOString() });
+        if (found.length > maximum) return;
+      }
+      if (type === "folder") {
+        await visit(rel);
+        if (found.length > maximum) return;
+      }
+    }
+  }
+  await visit();
+  found.sort((a, b) => a.path.localeCompare(b.path, "ro", { numeric: true, sensitivity: "base" }));
+  return { entries: found.slice(0, maximum), truncated: found.length > maximum };
+}
+
+async function treeBytes(target) {
+  const stat = await fs.promises.lstat(target);
+  if (stat.isSymbolicLink()) throw Object.assign(new Error("Copierea legăturilor simbolice nu este permisă."), { status: 400 });
+  if (stat.isFile()) return stat.size;
+  if (!stat.isDirectory()) throw Object.assign(new Error("Tipul elementului nu poate fi copiat."), { status: 400 });
+  let total = 0;
+  for (const entry of await fs.promises.readdir(target, { withFileTypes: true })) {
+    if (/^\.upload-[a-f0-9]{16}$/.test(entry.name)) continue;
+    total += await treeBytes(path.join(target, entry.name));
+  }
+  return total;
+}
+
+async function copyTree(source, destination) {
+  const stat = await fs.promises.lstat(source);
+  if (stat.isSymbolicLink()) throw Object.assign(new Error("Copierea legăturilor simbolice nu este permisă."), { status: 400 });
+  if (stat.isDirectory()) {
+    await fs.promises.mkdir(destination);
+    for (const name of await fs.promises.readdir(source)) {
+      if (/^\.upload-[a-f0-9]{16}$/.test(name)) continue;
+      await copyTree(path.join(source, name), path.join(destination, name));
+    }
+  } else if (stat.isFile()) {
+    await fs.promises.copyFile(source, destination, fs.constants.COPYFILE_EXCL);
+  } else {
+    throw Object.assign(new Error("Tipul elementului nu poate fi copiat."), { status: 400 });
+  }
+}
+
+async function copyName(destination, name, reserved) {
+  const extension = path.posix.extname(name);
+  const stem = extension ? name.slice(0, -extension.length) : name;
+  for (let number = 0; ; number += 1) {
+    const candidate = number === 0 ? name : `${stem} (copie${number === 1 ? "" : ` ${number}`})${extension}`;
+    if (reserved.has(candidate)) continue;
+    try { await fs.promises.lstat(path.join(destination, candidate)); }
+    catch (error) {
+      if (error.code === "ENOENT") { reserved.add(candidate); return candidate; }
+      throw error;
+    }
+  }
+}
+
 function encodeDisposition(name) {
   const fallback = name.replace(/[\r\n"\\]/g, "_");
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
@@ -280,13 +351,20 @@ async function handle(req, res) {
         return send(res, 200, { path: dir, entries: await listDirectory(dir) });
       }
 
+      if (req.method === "GET" && url.pathname === "/api/search") {
+        const query = String(url.searchParams.get("q") || "").trim().slice(0, 200);
+        if (query.length < 2) return send(res, 200, { entries: [], truncated: false });
+        return send(res, 200, await searchEntries(query));
+      }
+
       if (req.method === "GET" && url.pathname === "/api/folders") {
         return send(res, 200, { folders: await listFolders() });
       }
 
       if (req.method === "POST" && url.pathname === "/api/move") {
         const body = await readJson(req);
-        const sources = [...new Set((Array.isArray(body.sources) ? body.sources : []).map(relativePath))];
+        const requestedSources = [...new Set((Array.isArray(body.sources) ? body.sources : []).map(relativePath))];
+        const sources = requestedSources.filter((source) => !requestedSources.some((parent) => parent !== source && source.startsWith(`${parent}/`)));
         const destination = relativePath(body.destination);
         if (!sources.length || sources.some((source) => !source)) throw Object.assign(new Error("Selectează cel puțin un element de mutat."), { status: 400 });
         const movedCount = await withMutationLock(async () => {
@@ -323,9 +401,72 @@ async function handle(req, res) {
         return send(res, 200, { ok: true, moved: movedCount });
       }
 
+      if (req.method === "POST" && url.pathname === "/api/rename") {
+        const body = await readJson(req);
+        const source = relativePath(body.path);
+        if (!source) throw Object.assign(new Error("Rădăcina nu poate fi redenumită."), { status: 400 });
+        const name = safeName(body.name);
+        const parent = path.posix.dirname(source);
+        const destination = [parent === "." ? "" : parent, name].filter(Boolean).join("/");
+        if (destination === source) return send(res, 200, { ok: true, path: source, name });
+        await withMutationLock(async () => {
+          const sourcePath = await checkedTarget(source);
+          const parentPath = await checkedTarget(parent === "." ? "" : parent);
+          if (!(await fs.promises.stat(parentPath)).isDirectory()) throw Object.assign(new Error("Folderul părinte nu este valid."), { status: 400 });
+          const target = path.join(parentPath, name);
+          try { await fs.promises.lstat(target); throw Object.assign(new Error(`Există deja un element numit „${name}”.`), { status: 409 }); }
+          catch (error) { if (error.code !== "ENOENT") throw error; }
+          await fs.promises.rename(sourcePath, target);
+        });
+        return send(res, 200, { ok: true, path: destination, name });
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/copy") {
+        const body = await readJson(req);
+        const requested = [...new Set((Array.isArray(body.sources) ? body.sources : []).map(relativePath))];
+        const destination = relativePath(body.destination);
+        if (!requested.length || requested.some((source) => !source)) throw Object.assign(new Error("Selectează cel puțin un element pentru copiere."), { status: 400 });
+        const sources = requested.filter((source) => !requested.some((parent) => parent !== source && source.startsWith(`${parent}/`)));
+        const copiedNames = await withMutationLock(async () => {
+          const destinationPath = await checkedTarget(destination);
+          if (!(await fs.promises.stat(destinationPath)).isDirectory()) throw Object.assign(new Error("Destinația nu este un folder."), { status: 400 });
+          const reserved = new Set();
+          const copies = [];
+          for (const source of sources) {
+            if (destination === source || destination.startsWith(`${source}/`)) throw Object.assign(new Error("Un folder nu poate fi copiat în interiorul lui."), { status: 400 });
+            const sourcePath = await checkedTarget(source);
+            const name = await copyName(destinationPath, path.posix.basename(source), reserved);
+            copies.push({ sourcePath, target: path.join(destinationPath, name), name, bytes: await treeBytes(sourcePath) });
+          }
+          const growthBytes = copies.reduce((total, item) => total + item.bytes, 0);
+          await withQuotaLock(async () => {
+            const usedBytes = await getUsageBytes();
+            if (usedBytes + reservedQuotaBytes + growthBytes > MAX_STORAGE_BYTES) {
+              throw Object.assign(new Error("Copierea ar depăși limita de stocare de 15 GB."), { status: 413 });
+            }
+            reservedQuotaBytes += growthBytes;
+          });
+          const created = [];
+          try {
+            for (const item of copies) {
+              created.push(item.target);
+              await copyTree(item.sourcePath, item.target);
+            }
+          } catch (error) {
+            await Promise.all(created.map((target) => fs.promises.rm(target, { recursive: true, force: true }).catch(() => {})));
+            throw error;
+          } finally {
+            await withQuotaLock(async () => { reservedQuotaBytes = Math.max(0, reservedQuotaBytes - growthBytes); });
+          }
+          return copies.map((item) => item.name);
+        });
+        return send(res, 200, { ok: true, copied: copiedNames.length, names: copiedNames });
+      }
+
       if (req.method === "POST" && url.pathname === "/api/download-selected") {
         const body = await readJson(req);
-        const paths = [...new Set((Array.isArray(body.paths) ? body.paths : []).map(relativePath))];
+        const requestedPaths = [...new Set((Array.isArray(body.paths) ? body.paths : []).map(relativePath))];
+        const paths = requestedPaths.filter((item) => !requestedPaths.some((parent) => parent !== item && item.startsWith(`${parent}/`)));
         if (!paths.length || paths.some((item) => !item)) throw Object.assign(new Error("Selectează fișiere sau foldere pentru descărcare."), { status: 400 });
         for (const item of paths) await checkedTarget(item);
         return streamZip(res, ROOT, paths, "fisiere-selectate.zip");
