@@ -42,7 +42,6 @@ https://github.com/vlad2939/home-assistant-addons
 | --- | --- | --- | --- | --- | --- | --- |
 | Car Cost Dashboard | `car-cost-dashboard` | `car_cost_dashboard` | `1.5.8` | Da | `3000` | Stabil |
 | Home Cost Dashboard | `home-cost-dashboard` | `homecost` | `2026.8.0` | Da | `3000` | Stabil |
-| TubeDash | `tubedash-addon` | `tubedash` | `5.0.6` | Da | `3000` | Stabil |
 | Full Web Server | `ha-webserver` | `full_web_server` | `1.0.4` | Da | `80` | Stabil |
 | WordPress Full Option | `ha-wordpress-addon` | `wordpress_full` | `1.0.2` | Nu | `80` | Stabil |
 | MyTube Playlist | `mytubeplaylist-addon` | `mytubeplaylist` | `2.0.0` | Da | `3000` | Stabil |
@@ -88,21 +87,6 @@ Detalii:
 - port extern implicit: `3040`;
 - date aplicație: `app/database.json`;
 - fișiere principale: `app/`, `rootfs/`, `Dockerfile`.
-
-### TubeDash
-
-Aplicație HTML/CSS/JavaScript servită prin NGINX, destinată organizării și vizualizării conținutului YouTube într-un mediu controlat.
-
-Detalii:
-
-- folder: `tubedash-addon`;
-- slug: `tubedash`;
-- versiune: `5.0.2`;
-- ingress: activ;
-- port intern: `3000`;
-- fișiere principale: `index.html`, `style.css`, `app.js`, `data.json`.
-
-Notă: acest add-on a primit slug-ul `tubedash` pentru a evita conflictul cu `mytubedash-addon`.
 
 ### Full Web Server
 
@@ -229,11 +213,6 @@ home-assistant-addons/
     ...
 
   home-cost-dashboard/
-    config.yaml
-    Dockerfile
-    ...
-
-  tubedash-addon/
     config.yaml
     Dockerfile
     ...
