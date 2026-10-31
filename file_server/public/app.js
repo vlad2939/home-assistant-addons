@@ -599,7 +599,7 @@ async function moveSelected() {
 function transferItem(kind, name, total = 0) {
   const item = {
     id: ++state.transferId, kind, name, total: Number(total) || 0, loaded: 0,
-    status: "active", started: performance.now(), rate: 0, cancel: null,
+    status: "active", started: performance.now(), rate: 0, cancel: null, cancellable: true,
   };
   state.transfers.set(item.id, item);
   renderTransfers();
@@ -639,17 +639,20 @@ function renderTransfers() {
     else if (item.status === "cancelled") detail.textContent = "Anulat";
     else detail.textContent = item.error || "Transfer eșuat";
     copy.append(name, detail);
-    const dismiss = document.createElement("button");
-    dismiss.className = "transfer-action";
-    dismiss.type = "button";
-    dismiss.textContent = item.status === "active" ? "×" : "✓";
-    dismiss.title = item.status === "active" ? "Anulează transferul" : "Elimină din listă";
-    dismiss.addEventListener("click", () => {
-      if (item.status === "active") item.cancel?.();
-      else state.transfers.delete(item.id);
-      renderTransfers();
-    });
-    top.append(copy, dismiss);
+    top.append(copy);
+    if (item.status !== "active" || item.cancellable) {
+      const dismiss = document.createElement("button");
+      dismiss.className = "transfer-action";
+      dismiss.type = "button";
+      dismiss.textContent = item.status === "active" ? "×" : "✓";
+      dismiss.title = item.status === "active" ? "Anulează transferul" : "Elimină din listă";
+      dismiss.addEventListener("click", () => {
+        if (item.status === "active") item.cancel?.();
+        else state.transfers.delete(item.id);
+        renderTransfers();
+      });
+      top.append(dismiss);
+    }
     const progress = document.createElement("div");
     progress.className = `progress-track${item.status === "active" && !item.total ? " indeterminate" : ""}`;
     const bar = document.createElement("span");
@@ -794,7 +797,50 @@ async function downloadRequest(request, suggestedName, fallbackSize = 0) {
   }
 }
 
+async function downloadLargeFile(rel, entry) {
+  const transferId = `dl_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const item = transferItem("download", entry.name, entry.size || 0);
+  item.cancellable = false;
+  renderTransfers();
+  const link = document.createElement("a");
+  link.href = `/api/download?path=${encodeURIComponent(rel)}&transfer=${encodeURIComponent(transferId)}`;
+  link.download = entry.name;
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  link.remove();
+
+  let missingPolls = 0;
+  let failedPolls = 0;
+  while (item.status === "active") {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    try {
+      const response = await fetch(`/api/download-status?id=${encodeURIComponent(transferId)}`, { cache: "no-store" });
+      if (response.status === 404) {
+        missingPolls += 1;
+        if (missingPolls > 90) finishTransfer(item, "error", "Descărcarea nu a pornit pe server.");
+        continue;
+      }
+      if (!response.ok) throw new Error(`Eroare HTTP ${response.status}`);
+      missingPolls = 0;
+      failedPolls = 0;
+      const job = await response.json();
+      updateTransfer(item, job.loaded, job.total);
+      if (job.status === "done") finishTransfer(item, "done");
+      else if (job.status === "cancelled") finishTransfer(item, "cancelled");
+      else if (job.status === "error") finishTransfer(item, "error", job.error || "Descărcarea a eșuat.");
+    } catch (error) {
+      failedPolls += 1;
+      if (failedPolls > 10) finishTransfer(item, "error", error.message);
+    }
+  }
+}
+
 async function startDownload(rel, entry) {
+  if (entry.type === "file" && entry.size >= 2 * 1024 ** 3) {
+    await downloadLargeFile(rel, entry);
+    return;
+  }
   const suggestedName = entry.type === "folder" ? `${entry.name}.zip` : entry.name;
   await downloadRequest((signal) => fetch(`/api/download?path=${encodeURIComponent(rel)}`, { signal }), suggestedName, entry.size || 0);
 }
